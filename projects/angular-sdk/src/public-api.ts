@@ -10,9 +10,11 @@ export {
   isValidPlaceholderId,
   placeholderElementId,
 } from './lib/placeholder';
+export type { EzoicPlaceholder } from './lib/placeholder';
 
 export { provideEzoic } from './lib/provide-ezoic';
 export { EzoicService } from './lib/ezoic.service';
+export { EzoicAdComponent } from './lib/ezoic-ad.component';
 export {
   EZOIC_OPTIONS,
   EZOIC_SA_SCRIPT_URL,
@@ -20,4 +22,4 @@ export {
   EZOIC_ANALYTICS_SCRIPT_URL,
 } from './lib/ezoic-config';
 export type { EzoicOptions } from './lib/ezoic-config';
-export type { EzoicCommand, Ezstandalone } from './lib/ezstandalone.types';
+export type { EzoicCommand, EzoicPlaceholderArg, Ezstandalone } from './lib/ezstandalone.types';

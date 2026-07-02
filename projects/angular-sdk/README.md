@@ -13,15 +13,40 @@ standalone components, providers and services.
 
 ## Usage
 
-```ts
-import { isValidPlaceholderId, placeholderElementId } from '@ezoic/angular-sdk';
+Register the SDK once in your `ApplicationConfig`, then drop `<ezoic-ad>` components where you want
+placeholders:
 
-isValidPlaceholderId(101); // true
-placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideEzoic } from '@ezoic/angular-sdk';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideEzoic()],
+};
 ```
 
-Display-ad components, providers, SPA routing, consent, rewarded ads and video wrappers are on the
-roadmap.
+```ts
+import { Component } from '@angular/core';
+import { EzoicAdComponent } from '@ezoic/angular-sdk';
+
+@Component({
+  selector: 'app-article',
+  imports: [EzoicAdComponent],
+  template: `
+    <ezoic-ad [id]="101" />
+    <ezoic-ad [id]="102" required [sizes]="['728x90']" />
+  `,
+})
+export class ArticleComponent {}
+```
+
+Placeholders that mount in the same tick are batched into a single `showAds` call and torn down on
+destroy. `EzoicService` also exposes `showAds` / `displayMore` / `destroyPlaceholders` / `destroyAll`
+/ `refreshAds` / `isEzoicUser` for imperative and dynamic-content flows. See the
+[repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full guide.
+
+SPA routing, zero-config placements, consent, rewarded ads and video wrappers are on the roadmap.
 
 ## Documentation
 

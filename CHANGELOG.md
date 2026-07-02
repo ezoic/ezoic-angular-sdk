@@ -9,6 +9,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `EzoicAdComponent` (`<ezoic-ad>`) — a standalone component that renders a bare
+  `ezoic-pub-ad-placeholder-<id>` div (ids 1–999, no styling of its own), with `required` and
+  `sizes` inputs mapping to the verified `showAds` object form. Placeholders mounted in the same tick
+  are coalesced into a single `showAds(...)` call (the runtime applies its own debounce on top);
+  destroying a component tears its placeholder down via `destroyPlaceholders`. Ids are
+  reference-counted, so a duplicate mounted id warns and tears down only once. SSR-safe: the div
+  renders on the server and ad requests happen only in the browser.
+- `EzoicService` display passthroughs — `showAds`, `displayMore`, `destroyPlaceholders`,
+  `destroyAll`, `refreshAds` and `isEzoicUser`, each queued on `ezstandalone.cmd` and a no-op during
+  server-side rendering, for imperative and dynamic-content (infinite-scroll) flows.
+- `EzoicPlaceholder` and `EzoicPlaceholderArg` types describing the `showAds` argument forms.
 - `provideEzoic(options)` — `ApplicationConfig` providers that inject the Ezoic scripts at
   application startup in the required order: the two consent (CMP) scripts (each with
   `data-cfasync="false"` set before `src`), the `ezstandalone` command-queue stub, the async

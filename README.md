@@ -91,14 +91,84 @@ Script injection is idempotent. A script already present in the host HTML (inclu
 protocol-relative `//host/path` tag) is detected and never duplicated, and the command-queue stub is
 injected at most once.
 
+## Display ads
+
+Drop an `<ezoic-ad>` component wherever you want a placeholder. It renders a bare
+`<div id="ezoic-pub-ad-placeholder-<id>">` — the element the Ezoic runtime scans for — with no
+styling of its own:
+
+```ts
+import { Component } from '@angular/core';
+import { EzoicAdComponent } from '@ezoic/angular-sdk';
+
+@Component({
+  selector: 'app-article',
+  imports: [EzoicAdComponent],
+  template: `
+    <ezoic-ad [id]="101" />
+    <p>…article content…</p>
+    <ezoic-ad [id]="102" required [sizes]="['728x90', '320x50']" />
+  `,
+})
+export class ArticleComponent {}
+```
+
+- **Ids** are integers in the range 1–999 (900–999 are reserved for zero-config semantic placements,
+  coming in a later release). An out-of-range id throws at render time so the mistake surfaces
+  immediately.
+- **Batching:** every `<ezoic-ad>` that initializes in the same tick is coalesced into a single
+  `showAds(...)` call. The Ezoic runtime applies its own debounce on top, so the SDK adds no extra
+  timer.
+- **`required` / `sizes`** map to the verified `showAds` object form
+  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`).
+- **Teardown:** when a component is destroyed the placeholder is torn down via
+  `destroyPlaceholders(id)`. Ids are reference-counted, so mounting the same id twice logs a warning
+  (ids must be unique on a page) and tears down only once.
+- **SSR:** the placeholder `<div>` renders on the server; ad requests happen only in the browser.
+
+### Imperative and dynamic content
+
+For infinite scroll, dynamically injected content or manual control, `EzoicService` exposes the
+verified runtime methods. Each runs inside the command queue (safe before the runtime loads) and is a
+no-op during server-side rendering:
+
+```ts
+import { Component, inject } from '@angular/core';
+import { EzoicService } from '@ezoic/angular-sdk';
+
+@Component({ selector: 'app-feed', template: '' })
+export class FeedComponent {
+  private readonly ezoic = inject(EzoicService);
+
+  loadMore(): void {
+    // Request placeholders added after the initial page load.
+    this.ezoic.displayMore(105, 106);
+  }
+}
+```
+
+| Method                               | Purpose                                                            |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| `showAds(...placeholders)`           | Request placeholders (id or `{ id, required?, sizes? }`).          |
+| `displayMore(...ids)`                | Request additional placeholders after the initial load.            |
+| `destroyPlaceholders(...ids)`        | Tear down specific placeholders.                                   |
+| `destroyAll()`                       | Tear down every placeholder plus anchor, side rails and outstream. |
+| `refreshAds(...ids)`                 | Re-request bids for the given header-bidding placeholders.         |
+| `isEzoicUser(callback, percentage?)` | Report A/B group membership to `callback` once the runtime loads.  |
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
 
 - `provideEzoic(options)` — `ApplicationConfig` providers that inject the Ezoic scripts at startup.
-- `EzoicService` — `ready` signal, `push(fn)` command-queue helper, `isBrowser` flag.
+- `EzoicService` — `ready` signal, `push(fn)` command-queue helper, `isBrowser` flag, and display
+  passthroughs (`showAds`, `displayMore`, `destroyPlaceholders`, `destroyAll`, `refreshAds`,
+  `isEzoicUser`).
+- `EzoicAdComponent` (`<ezoic-ad>`) — declarative display placeholder with same-tick batching and
+  automatic teardown.
 - Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
-- `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicCommand` / `Ezstandalone` types.
+- `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicCommand` / `EzoicPlaceholder` /
+  `EzoicPlaceholderArg` / `Ezstandalone` types.
 - `EZOIC_SDK_VERSION` — the package version.
 - Placeholder id contract helpers:
   - `EZOIC_PLACEHOLDER_ID_PREFIX` — `"ezoic-pub-ad-placeholder-"`.
@@ -119,9 +189,9 @@ the roadmap below.
 ## Roadmap
 
 1. Package skeleton — done
-2. Provider + script management (`provideEzoic`) — current
-3. Display ads (`<ezoic-ad>`)
-4. SPA routing integration
+2. Provider + script management (`provideEzoic`) — done
+3. Display ads (`<ezoic-ad>`) — done
+4. SPA routing integration — current
 5. Zero-config placements (location names)
 6. CMP / consent + config
 7. Rewarded ads

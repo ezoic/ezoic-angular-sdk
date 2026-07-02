@@ -25,6 +25,28 @@ export function isValidPlaceholderId(id: number): boolean {
 }
 
 /**
+ * A display placeholder to request from the Ezoic runtime, in the verified
+ * object form accepted by `ezstandalone.showAds`. A bare integer id is also
+ * accepted anywhere this shape is (see {@link EzoicPlaceholderArg}).
+ *
+ * @see https://docs.ezoic.com/docs/ezoicads/integration/
+ */
+export interface EzoicPlaceholder {
+  /** The placeholder id (integer 1-999). */
+  id: number;
+  /**
+   * When `true`, the ad is requested as required (the runtime is told to treat
+   * it as must-fill). Defaults to `false`.
+   */
+  required?: boolean;
+  /**
+   * Ad sizes to request, each in `WIDTHxHEIGHT` form (for example `"728x90"`).
+   * The Ezoic runtime ignores entries that do not match that shape.
+   */
+  sizes?: string[];
+}
+
+/**
  * Builds the DOM element id for an Ezoic display placeholder.
  *
  * @param id A valid placeholder id (integer 1-999).
