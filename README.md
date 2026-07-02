@@ -33,11 +33,72 @@ Once published, installation will be:
 npm install @ezoic/angular-sdk
 ```
 
+## Quickstart
+
+Register the SDK once in your application config. `provideEzoic()` injects the Ezoic scripts in the
+required order — the two consent (CMP) scripts first (each with `data-cfasync="false"`), then the
+`ezstandalone` command-queue stub, then the async `sa.min.js` header bundle, then the analytics
+script — at application startup, in the browser only.
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideEzoic } from '@ezoic/angular-sdk';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideEzoic()],
+};
+```
+
+Then use `EzoicService` to queue work on the Ezoic command queue. `push` is safe to call before the
+header script has loaded (the function is buffered and run in order once the runtime is ready) and is
+a no-op during server-side rendering:
+
+```ts
+import { Component, inject } from '@angular/core';
+import { EzoicService } from '@ezoic/angular-sdk';
+
+@Component({ selector: 'app-root', standalone: true, template: '' })
+export class AppComponent {
+  private readonly ezoic = inject(EzoicService);
+
+  ready = this.ezoic.ready; // signal<boolean>: true once scripts are injected (browser only)
+}
+```
+
+### Options
+
+`provideEzoic(options)` accepts:
+
+| Option               | Default                  | Description                                                          |
+| -------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `cmp`                | `true`                   | Inject the two Ezoic consent (CMP) scripts before the header script. |
+| `scriptUrl`          | Ezoic `sa.min.js` URL    | Override the header bundle URL (e.g. to pin a specific build).       |
+| `analytics`          | `true`                   | Inject the Ezoic analytics script after the header script.           |
+| `analyticsScriptUrl` | Ezoic `analytics.js` URL | Override the analytics script URL.                                   |
+
+Only disable `cmp` if your site already loads an Ezoic-compatible TCF consent manager — the SDK never
+reorders consent after the header script.
+
+### Server-side rendering
+
+`provideEzoic()` is SSR-safe: on the server it injects nothing and touches no `window`/`document`
+globals, so it works unchanged with Angular's built-in SSR and Angular Universal.
+
+### Idempotency
+
+Script injection is idempotent. A script already present in the host HTML (including a
+protocol-relative `//host/path` tag) is detected and never duplicated, and the command-queue stub is
+injected at most once.
+
 ## What's included
 
-This is the package skeleton (roadmap item 1). It currently exports a small set of verified,
-framework-agnostic primitives that the higher-level components and services build on:
+Verified, framework-agnostic primitives and the provider/service layer:
 
+- `provideEzoic(options)` — `ApplicationConfig` providers that inject the Ezoic scripts at startup.
+- `EzoicService` — `ready` signal, `push(fn)` command-queue helper, `isBrowser` flag.
+- Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
+- `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicCommand` / `Ezstandalone` types.
 - `EZOIC_SDK_VERSION` — the package version.
 - Placeholder id contract helpers:
   - `EZOIC_PLACEHOLDER_ID_PREFIX` — `"ezoic-pub-ad-placeholder-"`.
@@ -52,13 +113,13 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Display-ad components, script-injection providers, SPA routing helpers, consent services, rewarded
-ads and video wrappers are on the roadmap below.
+Display-ad components, SPA routing helpers, consent services, rewarded ads and video wrappers are on
+the roadmap below.
 
 ## Roadmap
 
-1. Package skeleton — current
-2. Provider + script management (`provideEzoic`)
+1. Package skeleton — done
+2. Provider + script management (`provideEzoic`) — current
 3. Display ads (`<ezoic-ad>`)
 4. SPA routing integration
 5. Zero-config placements (location names)
