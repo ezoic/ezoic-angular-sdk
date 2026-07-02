@@ -3,6 +3,8 @@ import { isPlatformBrowser } from '@angular/common';
 import { EZOIC_OPTIONS, resolveEzoicOptions } from './ezoic-config';
 import { injectEzoicScripts } from './script-loader';
 import { EzoicCommand, EzoicPlaceholderArg, Ezstandalone, EzoicWindow } from './ezstandalone.types';
+import { MIN_PLACEHOLDER_ID } from './placeholder';
+import { resolveStaticLocationId } from './location-map';
 
 /**
  * Core Ezoic SDK service. Handles one-time header-script injection at
@@ -137,6 +139,37 @@ export class EzoicService {
    */
   newPage(): void {
     this.push(() => this.runtime()?.newPage?.());
+  }
+
+  /**
+   * Resolves a semantic ("zero-config") location name to a placeholder id.
+   *
+   * When the runtime has loaded it delegates to `ezstandalone.GetGeneratedIdAsync`,
+   * which is DOM-aware and allocates a free id in the reserved 900-999 range.
+   * Before the runtime is available it falls back to the SDK's static
+   * name-to-id map. Returns `null` for an unknown location name and during
+   * server-side rendering. Used by the `<ezoic-ad location="...">` component;
+   * publishers rarely need to call it directly.
+   *
+   * @param location A semantic location name or alias (for example
+   *   `"under_first_paragraph"` or `"incontent_5"`).
+   */
+  async resolveLocationId(location: string): Promise<number | null> {
+    if (!this.isBrowser) {
+      return null;
+    }
+    const runtime = this.runtime();
+    if (typeof runtime?.GetGeneratedIdAsync === 'function') {
+      try {
+        const resolved = Number(await runtime.GetGeneratedIdAsync(location));
+        if (Number.isInteger(resolved) && resolved >= MIN_PLACEHOLDER_ID) {
+          return resolved;
+        }
+      } catch {
+        // Fall back to the static map when the runtime helper throws.
+      }
+    }
+    return resolveStaticLocationId(location);
   }
 
   /**

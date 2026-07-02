@@ -179,6 +179,61 @@ describe('EzoicService', () => {
         expect(spies.newPage).toHaveBeenCalledTimes(1);
       });
     });
+
+    describe('resolveLocationId', () => {
+      function setRuntime(getGeneratedIdAsync?: jest.Mock): void {
+        (window as unknown as EzoicWindow).ezstandalone = getGeneratedIdAsync
+          ? { cmd: [], GetGeneratedIdAsync: getGeneratedIdAsync }
+          : { cmd: [] };
+      }
+
+      it('uses the static map when the runtime has not loaded', async () => {
+        setRuntime();
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('under_first_paragraph')).resolves.toBe(909);
+      });
+
+      it('resolves aliases via the static map', async () => {
+        setRuntime();
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('incontent_0')).resolves.toBe(910);
+      });
+
+      it('returns null for an unknown location with no runtime', async () => {
+        setRuntime();
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('not_a_place')).resolves.toBeNull();
+      });
+
+      it('delegates to the runtime helper and coerces a numeric string result', async () => {
+        const getId = jest.fn().mockResolvedValue('915');
+        setRuntime(getId);
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('incontent_5')).resolves.toBe(915);
+        expect(getId).toHaveBeenCalledWith('incontent_5');
+      });
+
+      it('accepts a runtime-allocated id above 999 (god mode)', async () => {
+        const getId = jest.fn().mockResolvedValue(1000);
+        setRuntime(getId);
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('mid_content')).resolves.toBe(1000);
+      });
+
+      it('falls back to the static map when the runtime helper rejects', async () => {
+        const getId = jest.fn().mockRejectedValue(new Error('boom'));
+        setRuntime(getId);
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('under_first_paragraph')).resolves.toBe(909);
+      });
+
+      it('falls back to the static map when the runtime returns a non-numeric result', async () => {
+        const getId = jest.fn().mockResolvedValue('not-a-number');
+        setRuntime(getId);
+        const service = TestBed.inject(EzoicService);
+        await expect(service.resolveLocationId('top_of_page')).resolves.toBe(900);
+      });
+    });
   });
 
   describe('during server-side rendering', () => {
@@ -222,6 +277,12 @@ describe('EzoicService', () => {
       service.setIsSinglePageApplication(true);
       service.setAutoRefresh(true);
       service.newPage();
+      expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
+    });
+
+    it('resolves a location to null without touching any window global', async () => {
+      const service = TestBed.inject(EzoicService);
+      await expect(service.resolveLocationId('under_first_paragraph')).resolves.toBeNull();
       expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
     });
   });

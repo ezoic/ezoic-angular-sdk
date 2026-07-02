@@ -9,6 +9,17 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Zero-config placements on `<ezoic-ad>` — a `location` input (for example
+  `location="under_first_paragraph"`) resolves a semantic location name to a reserved 900–999
+  placeholder id. When the runtime has loaded it resolves DOM-aware via
+  `ezstandalone.GetGeneratedIdAsync`; before then it falls back to the SDK's static name-to-id map
+  (all documented location names and aliases). Provide exactly one of `[id]` or `location` (an error
+  is thrown otherwise). Resolved ids flow through the same batching and teardown path as `[id]`;
+  unknown location names warn and request no ad. Location placeholders resolve in the browser only,
+  so their div is not rendered during server-side rendering.
+- `EzoicService.resolveLocationId(location)` — resolves a semantic location name to a placeholder id
+  (runtime helper when available, static map otherwise); returns `null` for an unknown name and
+  during server-side rendering.
 - `withRouterRefresh()` — a `provideEzoic` feature that enables single-page-application ad handling
   for Angular Router apps. At boot it marks the page as an SPA
   (`setIsSinglePageApplication(true)`), so a `showAds` on a new pageview routes through the runtime's

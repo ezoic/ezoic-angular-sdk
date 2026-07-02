@@ -36,17 +36,20 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
   template: `
     <ezoic-ad [id]="101" />
     <ezoic-ad [id]="102" required [sizes]="['728x90']" />
+    <ezoic-ad location="under_first_paragraph" />
   `,
 })
 export class ArticleComponent {}
 ```
 
-Placeholders that mount in the same tick are batched into a single `showAds` call and torn down on
-destroy. `EzoicService` also exposes `showAds` / `displayMore` / `destroyPlaceholders` / `destroyAll`
-/ `refreshAds` / `isEzoicUser` for imperative and dynamic-content flows. See the
+Give `<ezoic-ad>` either a numeric `[id]` (1–999) or a semantic `location` name (zero-config, resolved
+to a reserved 900–999 id) — exactly one of the two. Placeholders that mount in the same tick are
+batched into a single `showAds` call and torn down on destroy. `EzoicService` also exposes `showAds`
+/ `displayMore` / `destroyPlaceholders` / `destroyAll` / `refreshAds` / `isEzoicUser` /
+`resolveLocationId` for imperative and dynamic-content flows. See the
 [repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full guide.
 
-SPA routing, zero-config placements, consent, rewarded ads and video wrappers are on the roadmap.
+Consent, rewarded ads and video wrappers are on the roadmap.
 
 ## Documentation
 

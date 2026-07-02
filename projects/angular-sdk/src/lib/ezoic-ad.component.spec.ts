@@ -22,6 +22,23 @@ class HostComponent {
   ads: AdSpec[] = [];
 }
 
+interface FlexSpec {
+  id?: number;
+  location?: string;
+}
+
+@Component({
+  imports: [EzoicAdComponent],
+  template: `
+    @for (ad of ads; track $index) {
+      <ezoic-ad [id]="ad.id" [location]="ad.location"></ezoic-ad>
+    }
+  `,
+})
+class FlexHostComponent {
+  ads: FlexSpec[] = [];
+}
+
 interface Spies {
   showAds: jest.Mock;
   destroyPlaceholders: jest.Mock;
@@ -46,6 +63,11 @@ function drain(): void {
 
 function tick(): Promise<void> {
   return new Promise<void>((resolve) => queueMicrotask(resolve));
+}
+
+/** Drains every microtask (async location resolution + registry flush). */
+function settle(): Promise<void> {
+  return new Promise<void>((resolve) => setTimeout(resolve, 0));
 }
 
 function placeholderDiv(id: number): HTMLElement | null {
@@ -148,6 +170,137 @@ describe('EzoicAdComponent', () => {
       drain();
       expect(placeholderDiv(101)).not.toBeNull();
       expect(spies.showAds).not.toHaveBeenCalled();
+    });
+
+    it('renders no div and requests no ads for a location-based placeholder', async () => {
+      const spies = mockRuntime();
+      TestBed.configureTestingModule({
+        imports: [FlexHostComponent],
+        providers: [
+          { provide: EZOIC_OPTIONS, useValue: {} },
+          { provide: PLATFORM_ID, useValue: 'server' },
+        ],
+      });
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [{ location: 'under_first_paragraph' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(placeholderDiv(909)).toBeNull();
+      expect(spies.showAds).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('zero-config locations (in a browser)', () => {
+    let fixture: ComponentFixture<FlexHostComponent>;
+    let host: FlexHostComponent;
+    let spies: Spies;
+
+    beforeEach(() => {
+      spies = mockRuntime();
+      TestBed.configureTestingModule({
+        imports: [FlexHostComponent],
+        providers: [{ provide: EZOIC_OPTIONS, useValue: {} }],
+      });
+      fixture = TestBed.createComponent(FlexHostComponent);
+      host = fixture.componentInstance;
+    });
+
+    it('resolves a location to a 900-range id via the static fallback and renders it', async () => {
+      host.ads = [{ location: 'under_first_paragraph' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(placeholderDiv(909)).not.toBeNull();
+      expect(placeholderDiv(909)?.getAttribute('style')).toBeNull();
+      expect(spies.showAds).toHaveBeenCalledTimes(1);
+      expect(spies.showAds).toHaveBeenCalledWith(909);
+    });
+
+    it('resolves aliases through the static fallback', async () => {
+      host.ads = [{ location: 'incontent_0' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(placeholderDiv(910)).not.toBeNull();
+    });
+
+    it('coalesces several location placeholders into one showAds call', async () => {
+      host.ads = [
+        { location: 'top_of_page' },
+        { location: 'under_first_paragraph' },
+        { location: 'mid_content' },
+      ];
+      fixture.detectChanges();
+      await settle();
+      drain();
+      expect(spies.showAds).toHaveBeenCalledTimes(1);
+      expect(spies.showAds).toHaveBeenCalledWith(900, 909, 911);
+    });
+
+    it('tears down a location placeholder on destroy', async () => {
+      host.ads = [{ location: 'under_first_paragraph' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+
+      host.ads = [];
+      fixture.detectChanges();
+      drain();
+      expect(placeholderDiv(909)).toBeNull();
+      expect(spies.destroyPlaceholders).toHaveBeenCalledWith(909);
+    });
+
+    it('warns and requests nothing for an unknown location', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      host.ads = [{ location: 'not_a_real_location' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(placeholderDiv(909)).toBeNull();
+      expect(spies.showAds).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('not_a_real_location'));
+      warn.mockRestore();
+    });
+
+    it('throws when both [id] and location are provided', () => {
+      host.ads = [{ id: 101, location: 'top_of_page' }];
+      expect(() => fixture.detectChanges()).toThrow(/exactly one of \[id\] or location/);
+    });
+
+    it('throws when neither [id] nor location is provided', () => {
+      host.ads = [{}];
+      expect(() => fixture.detectChanges()).toThrow(/exactly one of \[id\] or location/);
+    });
+  });
+
+  describe('zero-config locations with the runtime helper', () => {
+    it('resolves via ezstandalone.GetGeneratedIdAsync when available', async () => {
+      const showAds = jest.fn();
+      const getId = jest.fn().mockResolvedValue('916');
+      (window as unknown as EzoicWindow).ezstandalone = {
+        cmd: [],
+        showAds,
+        GetGeneratedIdAsync: getId,
+      };
+      TestBed.configureTestingModule({
+        imports: [FlexHostComponent],
+        providers: [{ provide: EZOIC_OPTIONS, useValue: {} }],
+      });
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [{ location: 'incontent_6' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(getId).toHaveBeenCalledWith('incontent_6');
+      expect(placeholderDiv(916)).not.toBeNull();
+      expect(showAds).toHaveBeenCalledWith(916);
     });
   });
 });

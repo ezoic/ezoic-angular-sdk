@@ -113,8 +113,8 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
 export class ArticleComponent {}
 ```
 
-- **Ids** are integers in the range 1–999 (900–999 are reserved for zero-config semantic placements,
-  coming in a later release). An out-of-range id throws at render time so the mistake surfaces
+- **Ids** are integers in the range 1–999 (900–999 are reserved for the zero-config semantic
+  placements described below). An out-of-range id throws at render time so the mistake surfaces
   immediately.
 - **Batching:** every `<ezoic-ad>` that initializes in the same tick is coalesced into a single
   `showAds(...)` call. The Ezoic runtime applies its own debounce on top, so the SDK adds no extra
@@ -125,6 +125,39 @@ export class ArticleComponent {}
   `destroyPlaceholders(id)`. Ids are reference-counted, so mounting the same id twice logs a warning
   (ids must be unique on a page) and tears down only once.
 - **SSR:** the placeholder `<div>` renders on the server; ad requests happen only in the browser.
+
+### Zero-config placements
+
+Instead of assigning a numeric id, place an ad by intent with the `location` input. The SDK resolves
+the semantic name to a reserved 900–999 placeholder id:
+
+```ts
+@Component({
+  selector: 'app-article',
+  imports: [EzoicAdComponent],
+  template: `
+    <ezoic-ad location="top_of_page" />
+    <p>…first paragraph…</p>
+    <ezoic-ad location="under_first_paragraph" />
+    <p>…more content…</p>
+    <ezoic-ad location="mid_content" />
+  `,
+})
+export class ArticleComponent {}
+```
+
+- Provide **exactly one** of `[id]` or `location` on a component; supplying both or neither throws.
+- When the Ezoic runtime has loaded, resolution goes through `ezstandalone.GetGeneratedIdAsync`
+  (DOM-aware). Before then the SDK falls back to a built-in static name-to-id map, so placements
+  work even during the first paint.
+- Common location names: `top_of_page`, `under_page_title`, `bottom_of_page`,
+  `under_first_paragraph`, `under_second_paragraph`, `mid_content`, `long_content`,
+  `sidebar`, `sidebar_middle`, `sidebar_bottom`, `sidebar_floating_1`, and `incontent_5` …
+  `incontent_88`. Aliases such as `incontent_0` (→ `under_second_paragraph`) are also accepted.
+- An unrecognized location name logs a warning and requests no ad. Resolved placeholders batch and
+  tear down exactly like id-based ones.
+- **SSR:** location placeholders resolve in the browser, so their `<div>` is not rendered on the
+  server (id-based placeholders still render server-side).
 
 ### Imperative and dynamic content
 
@@ -201,7 +234,8 @@ Verified, framework-agnostic primitives and the provider/service layer:
   passthroughs (`showAds`, `displayMore`, `destroyPlaceholders`, `destroyAll`, `refreshAds`,
   `isEzoicUser`).
 - `EzoicAdComponent` (`<ezoic-ad>`) — declarative display placeholder with same-tick batching and
-  automatic teardown.
+  automatic teardown; accepts either a numeric `[id]` or a semantic `location` (zero-config).
+- `EzoicService.resolveLocationId(location)` — resolves a semantic location name to a placeholder id.
 - `withRouterRefresh(config?)` — provider feature that enables single-page-application ad handling
   for Angular Router apps (and the `EzoicFeature` / `RouterRefreshConfig` types).
 - Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
@@ -221,8 +255,7 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Zero-config semantic placements, consent services, rewarded ads and video wrappers are on the
-roadmap below.
+Consent services, rewarded ads and video wrappers are on the roadmap below.
 
 ## Roadmap
 
@@ -230,8 +263,8 @@ roadmap below.
 2. Provider + script management (`provideEzoic`) — done
 3. Display ads (`<ezoic-ad>`) — done
 4. SPA routing integration (`withRouterRefresh`) — done
-5. Zero-config placements (location names) — current
-6. CMP / consent + config
+5. Zero-config placements (location names) — done
+6. CMP / consent + config — current
 7. Rewarded ads
 8. Video (Ezoic outstream/instream + Humix)
 9. Docs + demo app

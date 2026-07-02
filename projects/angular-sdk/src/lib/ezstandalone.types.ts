@@ -72,6 +72,14 @@ export interface Ezstandalone {
    * call it during router navigation to avoid double-firing.
    */
   newPage?(): void;
+  /**
+   * Resolves a semantic location name (for example `"under_first_paragraph"`)
+   * to a placeholder id, allocating a free id in the reserved 900-999 range.
+   * Present only after the header script has loaded; before then the SDK falls
+   * back to its own static name-to-id map. The runtime returns the id as either
+   * a number or a numeric string.
+   */
+  GetGeneratedIdAsync?(location: string): Promise<number | string>;
 }
 
 /** `Window` augmented with the optional Ezoic runtime global. */
