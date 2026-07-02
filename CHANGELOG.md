@@ -9,6 +9,24 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Consent and privacy passthroughs on `EzoicService` — `enableConsent()`,
+  `setDisablePersonalizedAds(disable)` and `setDisablePersonalizedStatistics(disable)`, each queued on
+  the command queue and a no-op during server-side rendering.
+- Typed runtime configuration on `EzoicService` — `config(options)` accepts only the verified keys
+  (`anchorAdPosition`, `anchorAdExpansion`, `disableVideo`, `disableInterstitial`,
+  `disableLeftSideRail`, `disableRightSideRail`, `disableSidebarFloating`, `reservePlaceholderSpace`,
+  `limitCookies`, `vignetteDesktop`/`vignetteMobile`/`vignetteTablet`), so unknown keys are rejected at
+  compile time as well as by the runtime. `config` is write-only: the runtime's public `config` entry
+  point discards its return value, so the current configuration cannot be read back. New `EzoicConfig`
+  type.
+- Ad-format toggles on `EzoicService` — `setEzoicAnchorAd(enabled)` / `hasAnchorAdBeenClosed()`,
+  `setInterstitialAllowed(allowed, options?)` / `isInterstitialAllowed()`, and
+  `setOutstreamAllowed(allowed, options?)` / `isOutstreamAllowed()`. The getters return promises that
+  resolve once the runtime is ready and to a safe default (`false`) during server-side rendering.
+- `EzoicConsentService` — exposes the active CMP's IAB TCF v2.2 consent state as signals (`ready`,
+  `tcString`, `gdprApplies`, `eventStatus`). It registers a TCF event listener via `window.__tcfapi`
+  once the CMP loads (polling briefly for it) and removes it on teardown. All state stays at its
+  initial values during server-side rendering. New `TcfData` and `TcfEventStatus` types.
 - Zero-config placements on `<ezoic-ad>` — a `location` input (for example
   `location="under_first_paragraph"`) resolves a semantic location name to a reserved 900–999
   placeholder id. When the runtime has loaded it resolves DOM-aware via

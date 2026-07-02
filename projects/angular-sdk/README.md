@@ -46,10 +46,14 @@ Give `<ezoic-ad>` either a numeric `[id]` (1–999) or a semantic `location` nam
 to a reserved 900–999 id) — exactly one of the two. Placeholders that mount in the same tick are
 batched into a single `showAds` call and torn down on destroy. `EzoicService` also exposes `showAds`
 / `displayMore` / `destroyPlaceholders` / `destroyAll` / `refreshAds` / `isEzoicUser` /
-`resolveLocationId` for imperative and dynamic-content flows. See the
-[repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full guide.
+`resolveLocationId` for imperative and dynamic-content flows, plus consent/privacy passthroughs
+(`enableConsent`, `setDisablePersonalizedAds`, `setDisablePersonalizedStatistics`), a typed
+`config` setter, and ad-format toggles (anchor / interstitial / outstream). `EzoicConsentService`
+exposes the CMP's TCF v2.2 consent state (`ready`, `tcString`, `gdprApplies`, `eventStatus`) as
+signals. See the [repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full
+guide.
 
-Consent, rewarded ads and video wrappers are on the roadmap.
+Rewarded ads and video wrappers are on the roadmap.
 
 ## Documentation
 

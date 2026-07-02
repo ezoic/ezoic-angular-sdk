@@ -19,6 +19,16 @@ interface RuntimeSpies {
   setIsSinglePageApplication: jest.Mock;
   setAutoRefresh: jest.Mock;
   newPage: jest.Mock;
+  config: jest.Mock;
+  enableConsent: jest.Mock;
+  setDisablePersonalizedStatistics: jest.Mock;
+  setDisablePersonalizedAds: jest.Mock;
+  setEzoicAnchorAd: jest.Mock;
+  hasAnchorAdBeenClosed: jest.Mock;
+  setInterstitialAllowed: jest.Mock;
+  isInterstitialAllowed: jest.Mock;
+  setOutstreamAllowed: jest.Mock;
+  isOutstreamAllowed: jest.Mock;
 }
 
 function mockRuntime(): RuntimeSpies {
@@ -32,6 +42,16 @@ function mockRuntime(): RuntimeSpies {
     setIsSinglePageApplication: jest.fn(),
     setAutoRefresh: jest.fn(),
     newPage: jest.fn(),
+    config: jest.fn(),
+    enableConsent: jest.fn(),
+    setDisablePersonalizedStatistics: jest.fn(),
+    setDisablePersonalizedAds: jest.fn(),
+    setEzoicAnchorAd: jest.fn(),
+    hasAnchorAdBeenClosed: jest.fn(),
+    setInterstitialAllowed: jest.fn(),
+    isInterstitialAllowed: jest.fn(),
+    setOutstreamAllowed: jest.fn(),
+    isOutstreamAllowed: jest.fn(),
   };
   (window as unknown as EzoicWindow).ezstandalone = { cmd: [], ...spies };
   return spies;
@@ -180,6 +200,103 @@ describe('EzoicService', () => {
       });
     });
 
+    describe('consent + config passthroughs', () => {
+      it('enableConsent forwards to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.enableConsent();
+        drain();
+        expect(spies.enableConsent).toHaveBeenCalledTimes(1);
+      });
+
+      it('setDisablePersonalizedStatistics forwards the flag', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setDisablePersonalizedStatistics(true);
+        drain();
+        expect(spies.setDisablePersonalizedStatistics).toHaveBeenCalledWith(true);
+      });
+
+      it('setDisablePersonalizedAds forwards the flag', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setDisablePersonalizedAds(true);
+        drain();
+        expect(spies.setDisablePersonalizedAds).toHaveBeenCalledWith(true);
+      });
+
+      it('setEzoicAnchorAd forwards the flag', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setEzoicAnchorAd(true);
+        drain();
+        expect(spies.setEzoicAnchorAd).toHaveBeenCalledWith(true);
+      });
+
+      it('setInterstitialAllowed forwards the flag and options', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setInterstitialAllowed(false, { foo: 1 });
+        drain();
+        expect(spies.setInterstitialAllowed).toHaveBeenCalledWith(false, { foo: 1 });
+      });
+
+      it('config forwards the typed options object to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.config({ disableVideo: true, anchorAdPosition: 'top' });
+        drain();
+        expect(spies.config).toHaveBeenCalledWith({ disableVideo: true, anchorAdPosition: 'top' });
+      });
+
+      it('hasAnchorAdBeenClosed resolves the runtime value', async () => {
+        const spies = mockRuntime();
+        spies.hasAnchorAdBeenClosed.mockReturnValue(true);
+        const service = TestBed.inject(EzoicService);
+        const pending = service.hasAnchorAdBeenClosed();
+        drain();
+        await expect(pending).resolves.toBe(true);
+      });
+
+      it('isInterstitialAllowed resolves the runtime value', async () => {
+        const spies = mockRuntime();
+        spies.isInterstitialAllowed.mockReturnValue(true);
+        const service = TestBed.inject(EzoicService);
+        const pending = service.isInterstitialAllowed();
+        drain();
+        await expect(pending).resolves.toBe(true);
+      });
+
+      it('isOutstreamAllowed resolves false when the runtime read returns undefined', async () => {
+        const spies = mockRuntime();
+        spies.isOutstreamAllowed.mockReturnValue(undefined);
+        const service = TestBed.inject(EzoicService);
+        const pending = service.isOutstreamAllowed();
+        drain();
+        await expect(pending).resolves.toBe(false);
+      });
+
+      it('setOutstreamAllowed forwards args and resolves the runtime promise', async () => {
+        const spies = mockRuntime();
+        spies.setOutstreamAllowed.mockResolvedValue(true);
+        const service = TestBed.inject(EzoicService);
+        const pending = service.setOutstreamAllowed(true, { bar: 2 });
+        drain();
+        await expect(pending).resolves.toBe(true);
+        expect(spies.setOutstreamAllowed).toHaveBeenCalledWith(true, { bar: 2 });
+      });
+
+      it('resolves getters to their fallback when the runtime never exposes the method', async () => {
+        (window as unknown as EzoicWindow).ezstandalone = { cmd: [] };
+        const service = TestBed.inject(EzoicService);
+        const interstitial = service.isInterstitialAllowed();
+        const anchorClosed = service.hasAnchorAdBeenClosed();
+        drain();
+        await expect(interstitial).resolves.toBe(false);
+        await expect(anchorClosed).resolves.toBe(false);
+      });
+    });
+
     describe('resolveLocationId', () => {
       function setRuntime(getGeneratedIdAsync?: jest.Mock): void {
         (window as unknown as EzoicWindow).ezstandalone = getGeneratedIdAsync
@@ -283,6 +400,26 @@ describe('EzoicService', () => {
     it('resolves a location to null without touching any window global', async () => {
       const service = TestBed.inject(EzoicService);
       await expect(service.resolveLocationId('under_first_paragraph')).resolves.toBeNull();
+      expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
+    });
+
+    it('treats consent + config setters as no-ops that touch no window global', () => {
+      const service = TestBed.inject(EzoicService);
+      service.enableConsent();
+      service.setDisablePersonalizedStatistics(true);
+      service.setDisablePersonalizedAds(true);
+      service.setEzoicAnchorAd(true);
+      service.setInterstitialAllowed(true);
+      service.config({ disableVideo: true });
+      expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
+    });
+
+    it('resolves toggle getters to their defaults without a window global', async () => {
+      const service = TestBed.inject(EzoicService);
+      await expect(service.hasAnchorAdBeenClosed()).resolves.toBe(false);
+      await expect(service.isInterstitialAllowed()).resolves.toBe(false);
+      await expect(service.isOutstreamAllowed()).resolves.toBe(false);
+      await expect(service.setOutstreamAllowed(true)).resolves.toBe(false);
       expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
     });
   });

@@ -5,6 +5,7 @@ import { injectEzoicScripts } from './script-loader';
 import { EzoicCommand, EzoicPlaceholderArg, Ezstandalone, EzoicWindow } from './ezstandalone.types';
 import { MIN_PLACEHOLDER_ID } from './placeholder';
 import { resolveStaticLocationId } from './location-map';
+import { EzoicConfig } from './ezoic-runtime-config';
 
 /**
  * Core Ezoic SDK service. Handles one-time header-script injection at
@@ -170,6 +171,126 @@ export class EzoicService {
       }
     }
     return resolveStaticLocationId(location);
+  }
+
+  /**
+   * Signals that the publisher manages consent (an Ezoic-compatible CMP is on
+   * the page). The SDK injects the CMP scripts by default, so most sites do not
+   * need to call this. No-op during server-side rendering.
+   */
+  enableConsent(): void {
+    this.push(() => this.runtime()?.enableConsent?.());
+  }
+
+  /**
+   * Opts the current visitor out of personalized statistics. No-op during
+   * server-side rendering.
+   */
+  setDisablePersonalizedStatistics(disable: boolean): void {
+    this.push(() => this.runtime()?.setDisablePersonalizedStatistics?.(disable));
+  }
+
+  /**
+   * Opts the current visitor out of personalized ads. No-op during server-side
+   * rendering.
+   */
+  setDisablePersonalizedAds(disable: boolean): void {
+    this.push(() => this.runtime()?.setDisablePersonalizedAds?.(disable));
+  }
+
+  /** Enables or disables the Ezoic anchor ad. No-op during server-side rendering. */
+  setEzoicAnchorAd(enabled: boolean): void {
+    this.push(() => this.runtime()?.setEzoicAnchorAd?.(enabled));
+  }
+
+  /**
+   * Resolves whether the visitor has closed the anchor ad (reads the
+   * `ez_anchor_closed` cookie). Resolves once the runtime is ready; resolves to
+   * `false` during server-side rendering.
+   */
+  hasAnchorAdBeenClosed(): Promise<boolean> {
+    return this.query((rt) => rt.hasAnchorAdBeenClosed?.(), false);
+  }
+
+  /**
+   * Allows or blocks the interstitial ad. `options` is forwarded to the runtime
+   * unchanged. No-op during server-side rendering.
+   */
+  setInterstitialAllowed(allowed: boolean, options?: Record<string, unknown>): void {
+    this.push(() => this.runtime()?.setInterstitialAllowed?.(allowed, options));
+  }
+
+  /**
+   * Resolves whether the interstitial ad is currently allowed. Resolves once
+   * the runtime is ready; resolves to `false` during server-side rendering.
+   */
+  isInterstitialAllowed(): Promise<boolean> {
+    return this.query((rt) => rt.isInterstitialAllowed?.(), false);
+  }
+
+  /**
+   * Allows or blocks the floating outstream video. `options` is forwarded to
+   * the runtime unchanged. Resolves to the effective allowed state once the
+   * runtime is ready; resolves to `false` during server-side rendering.
+   */
+  setOutstreamAllowed(allowed: boolean, options?: Record<string, unknown>): Promise<boolean> {
+    return this.query((rt) => rt.setOutstreamAllowed?.(allowed, options), false);
+  }
+
+  /**
+   * Resolves whether floating outstream video is currently allowed. Resolves
+   * once the runtime is ready; resolves to `false` during server-side rendering.
+   */
+  isOutstreamAllowed(): Promise<boolean> {
+    return this.query((rt) => rt.isOutstreamAllowed?.(), false);
+  }
+
+  /**
+   * Sets runtime ad configuration. Only the keys typed on {@link EzoicConfig}
+   * are accepted; the runtime ignores unknown keys. No-op during server-side
+   * rendering.
+   *
+   * Write-only: the public `window.ezstandalone.config` wrapper forwards to the
+   * runtime but discards its return value, so the current configuration cannot
+   * be read back through the runtime API. Track the values you set in your own
+   * application state if you need to read them later.
+   */
+  config(options: EzoicConfig): void {
+    this.push(() => this.runtime()?.config?.(options));
+  }
+
+  /**
+   * Runs a value-returning runtime read inside the command queue so it binds to
+   * the runtime once it is ready, and returns the result as a promise. During
+   * server-side rendering — and if the read throws or returns `undefined` — it
+   * resolves to `fallback`. The runtime read may itself return a promise (as
+   * `setOutstreamAllowed` does); it is awaited before resolving.
+   */
+  private query<T>(
+    read: (runtime: Ezstandalone) => T | Promise<T> | undefined,
+    fallback: T,
+  ): Promise<T> {
+    if (!this.isBrowser) {
+      return Promise.resolve(fallback);
+    }
+    return new Promise<T>((resolve) => {
+      this.push(() => {
+        const runtime = this.runtime();
+        if (!runtime) {
+          resolve(fallback);
+          return;
+        }
+        try {
+          const value = read(runtime);
+          Promise.resolve(value as T | Promise<T>).then(
+            (resolved) => resolve(resolved ?? fallback),
+            () => resolve(fallback),
+          );
+        } catch {
+          resolve(fallback);
+        }
+      });
+    });
   }
 
   /**

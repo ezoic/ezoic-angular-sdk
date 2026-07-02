@@ -6,6 +6,8 @@
  */
 
 import type { EzoicPlaceholder } from './placeholder';
+import type { EzoicConfig } from './ezoic-runtime-config';
+import type { TcfApi } from './tcf.types';
 
 /** A function queued on `ezstandalone.cmd` to run once the runtime is ready. */
 export type EzoicCommand = () => void;
@@ -80,9 +82,42 @@ export interface Ezstandalone {
    * a number or a numeric string.
    */
   GetGeneratedIdAsync?(location: string): Promise<number | string>;
+  /**
+   * Setter for the runtime ad configuration. Called with an object it merges
+   * the known keys and ignores unknown ones (logging an error). The public
+   * `window.ezstandalone.config` wrapper does not return a value, so it cannot
+   * be used as a getter.
+   */
+  config?(options: EzoicConfig): void;
+  /** Signals to the server that the publisher manages consent (CMP present). */
+  enableConsent?(): void;
+  /** Opts the visitor out of personalized statistics. */
+  setDisablePersonalizedStatistics?(disable: boolean): void;
+  /** Opts the visitor out of personalized ads. */
+  setDisablePersonalizedAds?(disable: boolean): void;
+  /** Enables or disables the Ezoic anchor ad for the page. */
+  setEzoicAnchorAd?(value: boolean): void;
+  /** Reads the `ez_anchor_closed` cookie: `true` if the user closed the anchor ad. */
+  hasAnchorAdBeenClosed?(): boolean;
+  /** Allows or blocks the interstitial ad; `options` is passed through to the runtime. */
+  setInterstitialAllowed?(allowed: boolean, options?: Record<string, unknown>): void;
+  /** Reports whether the interstitial ad is currently allowed. */
+  isInterstitialAllowed?(): boolean;
+  /**
+   * Allows or blocks the floating outstream video; delegates to the outstream
+   * player when present and resolves to the effective allowed state.
+   */
+  setOutstreamAllowed?(
+    allowed: boolean,
+    options?: Record<string, unknown>,
+  ): Promise<boolean> | boolean;
+  /** Reports whether floating outstream video is currently allowed. */
+  isOutstreamAllowed?(): boolean;
 }
 
-/** `Window` augmented with the optional Ezoic runtime global. */
+/** `Window` augmented with the optional Ezoic runtime and TCF CMP globals. */
 export interface EzoicWindow extends Window {
   ezstandalone?: Ezstandalone;
+  /** IAB TCF v2.2 CMP API, present once an Ezoic-compatible CMP has loaded. */
+  __tcfapi?: TcfApi;
 }

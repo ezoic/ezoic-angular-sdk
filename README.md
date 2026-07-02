@@ -225,22 +225,110 @@ export const appConfig: ApplicationConfig = {
 - **Opt out** by simply not adding the feature. `withRouterRefresh()` is a no-op during server-side
   rendering, and requires `@angular/router` only when you use it (it is an optional peer dependency).
 
+## Consent, privacy and configuration
+
+The SDK injects the Ezoic consent-management scripts first by default (see [Options](#options)), so
+most sites need no extra consent code. For finer control, `EzoicService` exposes the verified consent
+and configuration methods, and `EzoicConsentService` reads the CMP's TCF state.
+
+### Consent and privacy passthroughs
+
+```ts
+import { Component, inject } from '@angular/core';
+import { EzoicService } from '@ezoic/angular-sdk';
+
+@Component({/* ... */})
+export class PrivacyControls {
+  private readonly ezoic = inject(EzoicService);
+
+  optOut(): void {
+    this.ezoic.setDisablePersonalizedAds(true);
+    this.ezoic.setDisablePersonalizedStatistics(true);
+  }
+}
+```
+
+- `enableConsent()` — signal that the publisher manages consent (a CMP is present).
+- `setDisablePersonalizedAds(disable)` / `setDisablePersonalizedStatistics(disable)` — visitor opt-out.
+
+Each is queued on the command queue and is a no-op during server-side rendering.
+
+### Typed runtime configuration
+
+`config(options)` accepts only the verified keys (the runtime ignores unknown keys, so typos are also
+caught at compile time). It is write-only: the runtime's public `config` entry point forwards the
+options but does not return the current configuration, so track the values you set in your own
+application state if you need to read them back.
+
+```ts
+this.ezoic.config({
+  anchorAdPosition: 'top',
+  reservePlaceholderSpace: true,
+  disableInterstitial: true,
+});
+```
+
+Accepted keys: `anchorAdPosition`, `anchorAdExpansion`, `disableVideo`, `disableInterstitial`,
+`disableLeftSideRail`, `disableRightSideRail`, `disableSidebarFloating`, `reservePlaceholderSpace`,
+`limitCookies`, `vignetteDesktop`, `vignetteMobile`, `vignetteTablet`.
+
+### Ad-format toggles
+
+- `setEzoicAnchorAd(enabled)` and `hasAnchorAdBeenClosed()` (resolves the closed state).
+- `setInterstitialAllowed(allowed, options?)` and `isInterstitialAllowed()`.
+- `setOutstreamAllowed(allowed, options?)` and `isOutstreamAllowed()`.
+
+The getters return promises that resolve once the runtime is ready (and to a safe default — `false` or
+an empty config — during server-side rendering).
+
+### Reading TCF consent state
+
+`EzoicConsentService` surfaces the active CMP's IAB TCF v2.2 state as signals. It registers a TCF
+event listener as soon as the CMP loads and removes it on teardown:
+
+```ts
+import { Component, effect, inject } from '@angular/core';
+import { EzoicConsentService } from '@ezoic/angular-sdk';
+
+@Component({/* ... */})
+export class ConsentBadge {
+  private readonly consent = inject(EzoicConsentService);
+
+  constructor() {
+    effect(() => {
+      if (this.consent.ready()) {
+        console.log('TC string', this.consent.tcString(), 'gdpr', this.consent.gdprApplies());
+      }
+    });
+  }
+}
+```
+
+Signals: `ready` (a usable TC string is available), `tcString`, `gdprApplies`, `eventStatus`. All stay
+at their initial values during server-side rendering. Adapt them to observables with `toObservable`
+from `@angular/core/rxjs-interop` if you prefer RxJS.
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
 
 - `provideEzoic(options)` — `ApplicationConfig` providers that inject the Ezoic scripts at startup.
-- `EzoicService` — `ready` signal, `push(fn)` command-queue helper, `isBrowser` flag, and display
+- `EzoicService` — `ready` signal, `push(fn)` command-queue helper, `isBrowser` flag, display
   passthroughs (`showAds`, `displayMore`, `destroyPlaceholders`, `destroyAll`, `refreshAds`,
-  `isEzoicUser`).
+  `isEzoicUser`), consent/privacy passthroughs (`enableConsent`, `setDisablePersonalizedAds`,
+  `setDisablePersonalizedStatistics`), typed `config` setter, and ad-format toggles
+  (`setEzoicAnchorAd`, `hasAnchorAdBeenClosed`, `setInterstitialAllowed`, `isInterstitialAllowed`,
+  `setOutstreamAllowed`, `isOutstreamAllowed`).
+- `EzoicConsentService` — CMP TCF v2.2 consent state as signals (`ready`, `tcString`, `gdprApplies`,
+  `eventStatus`).
 - `EzoicAdComponent` (`<ezoic-ad>`) — declarative display placeholder with same-tick batching and
   automatic teardown; accepts either a numeric `[id]` or a semantic `location` (zero-config).
 - `EzoicService.resolveLocationId(location)` — resolves a semantic location name to a placeholder id.
 - `withRouterRefresh(config?)` — provider feature that enables single-page-application ad handling
   for Angular Router apps (and the `EzoicFeature` / `RouterRefreshConfig` types).
 - Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
-- `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicCommand` / `EzoicPlaceholder` /
-  `EzoicPlaceholderArg` / `Ezstandalone` types.
+- `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicConfig` / `EzoicCommand` / `EzoicPlaceholder` /
+  `EzoicPlaceholderArg` / `Ezstandalone` / `TcfData` / `TcfEventStatus` types.
 - `EZOIC_SDK_VERSION` — the package version.
 - Placeholder id contract helpers:
   - `EZOIC_PLACEHOLDER_ID_PREFIX` — `"ezoic-pub-ad-placeholder-"`.
@@ -255,7 +343,7 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Consent services, rewarded ads and video wrappers are on the roadmap below.
+Rewarded ads and video wrappers are on the roadmap below.
 
 ## Roadmap
 
@@ -264,8 +352,8 @@ Consent services, rewarded ads and video wrappers are on the roadmap below.
 3. Display ads (`<ezoic-ad>`) — done
 4. SPA routing integration (`withRouterRefresh`) — done
 5. Zero-config placements (location names) — done
-6. CMP / consent + config — current
-7. Rewarded ads
+6. CMP / consent + config — done
+7. Rewarded ads — current
 8. Video (Ezoic outstream/instream + Humix)
 9. Docs + demo app
 
