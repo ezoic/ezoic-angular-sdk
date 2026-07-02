@@ -113,6 +113,33 @@ export class EzoicService {
   }
 
   /**
+   * Marks the page as a single-page application so subsequent `showAds` calls on
+   * new pageviews refresh ads for the new route. Push once at app boot; the
+   * `withRouterRefresh` provider feature does this for you.
+   */
+  setIsSinglePageApplication(value: boolean): void {
+    this.push(() => this.runtime()?.setIsSinglePageApplication?.(value));
+  }
+
+  /**
+   * Enables the runtime's auto-refresh behaviour: on each new pageview it clears
+   * placeholder DOM and fires `ezPageUnload`. Off by default.
+   */
+  setAutoRefresh(value: boolean): void {
+    this.push(() => this.runtime()?.setAutoRefresh?.(value));
+  }
+
+  /**
+   * Signals a new pageview to the runtime. Rarely needed: the runtime already
+   * detects `history.pushState`/`replaceState` automatically, so calling this in
+   * addition would double-fire. Exposed for imperative flows that change the
+   * pageview without a history navigation.
+   */
+  newPage(): void {
+    this.push(() => this.runtime()?.newPage?.());
+  }
+
+  /**
    * Returns the live `ezstandalone` runtime once the header script has loaded,
    * or `undefined` before then. Resolved lazily inside queued commands so calls
    * bind to the real runtime at execution time, not at queue time.

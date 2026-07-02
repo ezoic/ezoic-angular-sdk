@@ -16,6 +16,9 @@ interface RuntimeSpies {
   destroyAll: jest.Mock;
   refreshAds: jest.Mock;
   isEzoicUser: jest.Mock;
+  setIsSinglePageApplication: jest.Mock;
+  setAutoRefresh: jest.Mock;
+  newPage: jest.Mock;
 }
 
 function mockRuntime(): RuntimeSpies {
@@ -26,6 +29,9 @@ function mockRuntime(): RuntimeSpies {
     destroyAll: jest.fn(),
     refreshAds: jest.fn(),
     isEzoicUser: jest.fn(),
+    setIsSinglePageApplication: jest.fn(),
+    setAutoRefresh: jest.fn(),
+    newPage: jest.fn(),
   };
   (window as unknown as EzoicWindow).ezstandalone = { cmd: [], ...spies };
   return spies;
@@ -147,6 +153,32 @@ describe('EzoicService', () => {
         expect(spies.isEzoicUser).toHaveBeenCalledWith(50, callback);
       });
     });
+
+    describe('SPA passthroughs', () => {
+      it('setIsSinglePageApplication forwards the flag to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setIsSinglePageApplication(true);
+        drain();
+        expect(spies.setIsSinglePageApplication).toHaveBeenCalledWith(true);
+      });
+
+      it('setAutoRefresh forwards the flag to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.setAutoRefresh(true);
+        drain();
+        expect(spies.setAutoRefresh).toHaveBeenCalledWith(true);
+      });
+
+      it('newPage forwards to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.newPage();
+        drain();
+        expect(spies.newPage).toHaveBeenCalledTimes(1);
+      });
+    });
   });
 
   describe('during server-side rendering', () => {
@@ -182,6 +214,14 @@ describe('EzoicService', () => {
       service.showAds(101);
       service.destroyPlaceholders(101);
       service.destroyAll();
+      expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
+    });
+
+    it('treats SPA passthroughs as no-ops that touch no window global', () => {
+      const service = TestBed.inject(EzoicService);
+      service.setIsSinglePageApplication(true);
+      service.setAutoRefresh(true);
+      service.newPage();
       expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
     });
   });

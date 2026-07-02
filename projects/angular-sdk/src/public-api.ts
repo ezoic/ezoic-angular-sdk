@@ -15,6 +15,9 @@ export type { EzoicPlaceholder } from './lib/placeholder';
 export { provideEzoic } from './lib/provide-ezoic';
 export { EzoicService } from './lib/ezoic.service';
 export { EzoicAdComponent } from './lib/ezoic-ad.component';
+export { withRouterRefresh } from './lib/with-router-refresh';
+export type { RouterRefreshConfig } from './lib/with-router-refresh';
+export type { EzoicFeature, EzoicFeatureKind } from './lib/ezoic-feature';
 export {
   EZOIC_OPTIONS,
   EZOIC_SA_SCRIPT_URL,

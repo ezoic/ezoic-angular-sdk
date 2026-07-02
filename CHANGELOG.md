@@ -9,6 +9,20 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `withRouterRefresh()` — a `provideEzoic` feature that enables single-page-application ad handling
+  for Angular Router apps. At boot it marks the page as an SPA
+  (`setIsSinglePageApplication(true)`), so a `showAds` on a new pageview routes through the runtime's
+  refresh flow. With `<ezoic-ad>` components no per-route wiring is needed — component mount/unmount
+  already drives `showAds`/`destroyPlaceholders`. Pass `{ placeholderIds }` to also refresh
+  imperative placements on each `NavigationEnd` (first navigation requests them; later navigations
+  tear down the previous set and re-request inside `requestAnimationFrame`). The SDK never calls
+  `newPage()` itself, coalescing with the runtime's own `pushState`/`replaceState` detection to avoid
+  double-firing. No-op during server-side rendering; `@angular/router` is an optional peer dependency
+  used only when the feature is added.
+- `EzoicService` SPA passthroughs — `setIsSinglePageApplication`, `setAutoRefresh` and `newPage`,
+  each queued on `ezstandalone.cmd` and a no-op during server-side rendering.
+- `EzoicFeature` / `EzoicFeatureKind` types and a variadic `provideEzoic(options, ...features)`
+  signature so optional capabilities can be composed into the application providers.
 - `EzoicAdComponent` (`<ezoic-ad>`) — a standalone component that renders a bare
   `ezoic-pub-ad-placeholder-<id>` div (ids 1–999, no styling of its own), with `required` and
   `sizes` inputs mapping to the verified `showAds` object form. Placeholders mounted in the same tick

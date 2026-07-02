@@ -156,6 +156,42 @@ export class FeedComponent {
 | `refreshAds(...ids)`                 | Re-request bids for the given header-bidding placeholders.         |
 | `isEzoicUser(callback, percentage?)` | Report A/B group membership to `callback` once the runtime loads.  |
 
+## Single-page application routing
+
+Add the `withRouterRefresh()` feature to `provideEzoic` so ads behave correctly across Angular
+Router navigations. At startup it marks the page as a single-page application
+(`setIsSinglePageApplication(true)`), so a `showAds` on a new pageview routes through the runtime's
+refresh flow instead of a first-load:
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideRouter } from '@angular/router';
+import { provideEzoic, withRouterRefresh } from '@ezoic/angular-sdk';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideRouter(routes), provideEzoic({}, withRouterRefresh())],
+};
+```
+
+- **With `<ezoic-ad>` components** that is all you need: each route's components mount and unmount on
+  navigation, which already issues `showAds` for the arriving placeholders and `destroyPlaceholders`
+  for the departing ones.
+- **No double-fire:** the SDK never calls `newPage()` itself. The Ezoic runtime already detects the
+  `history.pushState`/`replaceState` calls Angular Router makes and fires `newPage()` on its own
+  (debounced), so the SDK coalesces with it rather than triggering a second pageview.
+- **Imperative placements:** if you place ads without `<ezoic-ad>`, pass the ids to refresh on every
+  navigation. On the first navigation they are requested; on each later navigation the previous set
+  is torn down and re-requested inside `requestAnimationFrame` (so the new route's DOM is present).
+  Do not combine this with `<ezoic-ad>` for the same ids — that would request them twice.
+
+  ```ts
+  provideEzoic({}, withRouterRefresh({ placeholderIds: [101, 102] }));
+  ```
+
+- **Opt out** by simply not adding the feature. `withRouterRefresh()` is a no-op during server-side
+  rendering, and requires `@angular/router` only when you use it (it is an optional peer dependency).
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
@@ -166,6 +202,8 @@ Verified, framework-agnostic primitives and the provider/service layer:
   `isEzoicUser`).
 - `EzoicAdComponent` (`<ezoic-ad>`) — declarative display placeholder with same-tick batching and
   automatic teardown.
+- `withRouterRefresh(config?)` — provider feature that enables single-page-application ad handling
+  for Angular Router apps (and the `EzoicFeature` / `RouterRefreshConfig` types).
 - Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
 - `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicCommand` / `EzoicPlaceholder` /
   `EzoicPlaceholderArg` / `Ezstandalone` types.
@@ -183,16 +221,16 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Display-ad components, SPA routing helpers, consent services, rewarded ads and video wrappers are on
-the roadmap below.
+Zero-config semantic placements, consent services, rewarded ads and video wrappers are on the
+roadmap below.
 
 ## Roadmap
 
 1. Package skeleton — done
 2. Provider + script management (`provideEzoic`) — done
 3. Display ads (`<ezoic-ad>`) — done
-4. SPA routing integration — current
-5. Zero-config placements (location names)
+4. SPA routing integration (`withRouterRefresh`) — done
+5. Zero-config placements (location names) — current
 6. CMP / consent + config
 7. Rewarded ads
 8. Video (Ezoic outstream/instream + Humix)

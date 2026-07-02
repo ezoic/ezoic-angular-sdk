@@ -53,6 +53,25 @@ export interface Ezstandalone {
    * is delivered to `callback`; `percentage` overrides the sampling rate.
    */
   isEzoicUser?(percentage?: number, callback?: (isUser: boolean) => void): boolean;
+  /**
+   * Marks the page as a single-page application. When enabled, a subsequent
+   * `showAds` on a new pageview routes through the runtime's internal
+   * `refresh()` flow instead of a first-load, so ads reload for the new route.
+   * Push this once at application boot.
+   */
+  setIsSinglePageApplication?(value: boolean): void;
+  /**
+   * When `true`, the runtime clears placeholder DOM and fires `ezPageUnload` on
+   * each new pageview (`newPage`). Off by default.
+   */
+  setAutoRefresh?(value: boolean): void;
+  /**
+   * Signals a new pageview to the runtime (resets the enabled state so the next
+   * `showAds` refreshes). The runtime also calls this automatically on
+   * `history.pushState`/`replaceState` (debounced ~1000 ms), so the SDK does not
+   * call it during router navigation to avoid double-firing.
+   */
+  newPage?(): void;
 }
 
 /** `Window` augmented with the optional Ezoic runtime global. */

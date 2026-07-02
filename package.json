@@ -43,6 +43,7 @@
     "@angular/build": "^20.3.31",
     "@angular/cli": "^20.3.31",
     "@angular/compiler-cli": "^20.3.0",
+    "@angular/router": "^20.3.25",
     "@types/jest": "30.0.0",
     "@types/node": "^20.19.0",
     "angular-eslint": "20.7.0",
