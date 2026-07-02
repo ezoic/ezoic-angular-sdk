@@ -1,0 +1,58 @@
+{
+  "name": "ezoic-angular-sdk",
+  "version": "0.1.0",
+  "description": "Development workspace for @ezoic/angular-sdk — the official Ezoic SDK for Angular.",
+  "license": "MIT",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "ng": "ng",
+    "build": "ng build angular-sdk --configuration production",
+    "watch": "ng build angular-sdk --watch --configuration development",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "ng lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "pack:lib": "npm run build && cd dist/angular-sdk && npm pack"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.31",
+    "@angular/cli": "^20.3.31",
+    "@angular/compiler-cli": "^20.3.0",
+    "@types/jest": "30.0.0",
+    "@types/node": "^20.19.0",
+    "angular-eslint": "20.7.0",
+    "eslint": "^9.39.1",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^30.4.2",
+    "jest-preset-angular": "^17.0.0",
+    "ng-packagr": "^20.3.0",
+    "prettier": "^3.9.4",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "8.46.4"
+  }
+}

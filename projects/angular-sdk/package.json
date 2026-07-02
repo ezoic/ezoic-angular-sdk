@@ -1,0 +1,34 @@
+{
+  "name": "@ezoic/angular-sdk",
+  "version": "0.1.0",
+  "description": "Official Ezoic SDK for Angular — script management, display ads, SPA routing, CMP/consent, rewarded ads and video for Ezoic ad integration.",
+  "keywords": [
+    "ezoic",
+    "angular",
+    "ads",
+    "adsense",
+    "header-bidding",
+    "sdk"
+  ],
+  "license": "MIT",
+  "author": "Ezoic",
+  "homepage": "https://github.com/ezoic/ezoic-angular-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ezoic/ezoic-angular-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ezoic/ezoic-angular-sdk/issues"
+  },
+  "peerDependencies": {
+    "@angular/common": "^20.0.0 || ^21.0.0 || ^22.0.0",
+    "@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  }
+}
