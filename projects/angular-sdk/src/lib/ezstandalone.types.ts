@@ -20,6 +20,32 @@ export type EzoicCommand = () => void;
 export type EzoicPlaceholderArg = number | EzoicPlaceholder;
 
 /**
+ * An entry accepted by `ezstandalone.defineVideo` / `displayMoreVideo`: either a
+ * bare video div-id string or the object form `{ divID }`.
+ */
+export type EzoicVideoDefinition = string | { divID: string };
+
+/**
+ * An entry pushed onto `window.openVideoPlayers` to mount an Open Video inline
+ * embed. The Open Video script (`https://open.video/video.js`) reads `target`
+ * (the container element), `videoID`, and the optional `playlist`, `float` and
+ * `autoplay` fields off each entry. Note the exact `videoID` casing (capital
+ * `ID`).
+ */
+export interface EzoicOpenVideoEntry {
+  /** The container element the player mounts into. */
+  target: Element;
+  /** The Open Video video id (capital `ID`, as read by the embed script). */
+  videoID: string;
+  /** Optional playlist id to load instead of a single video. */
+  playlist?: string;
+  /** Enable the floating player behaviour. */
+  float?: boolean;
+  /** Autoplay the video. */
+  autoplay?: boolean;
+}
+
+/**
  * The subset of `window.ezstandalone` the SDK reads or writes. The command
  * queue is the only member required before the header script (`sa.min.js`)
  * finishes loading; the remaining members are populated by the runtime at load
@@ -47,6 +73,20 @@ export interface Ezstandalone {
   displayMore?(...ids: number[]): void;
   /** Tears down the given placeholders by id. */
   destroyPlaceholders?(...ids: number[]): void;
+  /**
+   * Clears the video registry and registers `entries` WITHOUT loading them.
+   * Each entry is a video div-id string or `{ divID }`. Use `displayMoreVideo`
+   * to actually load video placeholders.
+   */
+  defineVideo?(...entries: EzoicVideoDefinition[]): void;
+  /**
+   * Appends `entries` to the video registry AND loads them — the video analog
+   * of `showAds`. Each entry is a video div-id string or `{ divID }`. Gated
+   * internally on document readiness (self-queues until ready).
+   */
+  displayMoreVideo?(...entries: EzoicVideoDefinition[]): void;
+  /** Tears down the given video placeholders by div id (clears the div and destroys the player). */
+  destroyVideoPlaceholders?(...divIDs: string[]): void;
   /** Tears down every selected placeholder plus anchor, side rails and floating outstream. */
   destroyAll?(): void;
   /** Re-requests bids for the given (header-bidding) placeholders by id. */
@@ -133,4 +173,12 @@ export interface EzoicWindow extends Window {
    * {@link EzoicWindow.ezstandalone} with its own command queue.
    */
   ezRewardedAds?: EzoicRewardedApi;
+  /**
+   * Open Video embed queue. The canonical global the Open Video script
+   * (`https://open.video/video.js`) drains to mount inline embeds; the SDK
+   * pushes an {@link EzoicOpenVideoEntry} per `<ezoic-video-embed>`. The
+   * `||[]` guard tolerates pushes before the script loads. (`humixPlayers` is a
+   * legacy alias; the SDK never writes to it.)
+   */
+  openVideoPlayers?: EzoicOpenVideoEntry[];
 }

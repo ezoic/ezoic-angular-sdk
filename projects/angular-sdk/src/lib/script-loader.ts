@@ -1,5 +1,9 @@
-import { EZOIC_CMP_SCRIPT_URLS, ResolvedEzoicOptions } from './ezoic-config';
-import { EzoicWindow } from './ezstandalone.types';
+import {
+  EZOIC_CMP_SCRIPT_URLS,
+  EZOIC_OPEN_VIDEO_SCRIPT_URL,
+  ResolvedEzoicOptions,
+} from './ezoic-config';
+import { EzoicOpenVideoEntry, EzoicWindow } from './ezstandalone.types';
 
 /**
  * Marker attribute set on every script element the SDK injects. Its value
@@ -14,6 +18,7 @@ const MARKER_HEADER = 'header';
 const MARKER_ANALYTICS = 'analytics';
 const MARKER_REWARDED_CMD_STUB = 'rewarded-cmd-stub';
 const MARKER_REWARDED = 'rewarded';
+const MARKER_OPEN_VIDEO = 'open-video';
 
 interface ScriptAttributes {
   /** Set `async` on the element. */
@@ -91,6 +96,49 @@ export function injectRewardedLoader(doc: Document, loaderUrl: string): void {
   appendRewardedCommandQueueStub(doc, head);
 
   appendExternalScript(doc, head, loaderUrl, MARKER_REWARDED, { async: true });
+}
+
+/**
+ * Injects the Open Video embed script (`https://open.video/video.js`) into
+ * `doc` as an async external script.
+ *
+ * Idempotent: the script is deduplicated by host + pathname, so a tag already
+ * present in the host HTML or added by a previous call is not re-injected. No
+ * command-queue stub is needed — `window.openVideoPlayers` is seeded as a queue
+ * array by {@link pushOpenVideoPlayer} and swapped to the script's own handler
+ * once loaded.
+ *
+ * Callers must ensure this only runs in a browser; it performs no platform
+ * check of its own.
+ */
+export function injectOpenVideoLoader(doc: Document): void {
+  const head = doc.head;
+  if (!head) {
+    return;
+  }
+  appendExternalScript(doc, head, EZOIC_OPEN_VIDEO_SCRIPT_URL, MARKER_OPEN_VIDEO, { async: true });
+}
+
+/**
+ * Pushes an Open Video embed entry onto `window.openVideoPlayers` using the
+ * canonical `|| []` guard: the array is created only when the global is absent.
+ *
+ * Before `video.js` loads, entries queue in this array. Once loaded, the script
+ * REPLACES `window.openVideoPlayers` with a non-array handler object whose
+ * `push` builds each embed, so the guard must only initialize when the global
+ * is falsy — never reset a truthy non-array value, which would clobber that
+ * live handler and silently stop later embeds from mounting.
+ *
+ * Callers must ensure this only runs in a browser; it performs no platform
+ * check of its own.
+ */
+export function pushOpenVideoPlayer(doc: Document, entry: EzoicOpenVideoEntry): void {
+  const win = doc.defaultView as EzoicWindow | null;
+  if (!win) {
+    return;
+  }
+  win.openVideoPlayers = win.openVideoPlayers || [];
+  win.openVideoPlayers.push(entry);
 }
 
 /** Initializes `window.ezstandalone.cmd` without relying on the inline stub. */

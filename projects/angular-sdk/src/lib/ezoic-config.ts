@@ -18,6 +18,14 @@ export const EZOIC_CMP_SCRIPT_URLS = [
 /** Default URL of the optional Ezoic analytics script. */
 export const EZOIC_ANALYTICS_SCRIPT_URL = 'https://ezoicanalytics.com/analytics.js';
 
+/**
+ * URL of the Open Video embed script, injected once by `<ezoic-video-embed>`. It
+ * drains `window.openVideoPlayers` to mount inline video embeds.
+ *
+ * @see https://docs.ezoic.com/docs/ezoicadsadvanced/ezoic-video/
+ */
+export const EZOIC_OPEN_VIDEO_SCRIPT_URL = 'https://open.video/video.js';
+
 /** Options accepted by `provideEzoic`. */
 export interface EzoicOptions {
   /**

@@ -15,6 +15,9 @@ interface RuntimeSpies {
   destroyPlaceholders: jest.Mock;
   destroyAll: jest.Mock;
   refreshAds: jest.Mock;
+  defineVideo: jest.Mock;
+  displayMoreVideo: jest.Mock;
+  destroyVideoPlaceholders: jest.Mock;
   isEzoicUser: jest.Mock;
   setIsSinglePageApplication: jest.Mock;
   setAutoRefresh: jest.Mock;
@@ -39,6 +42,9 @@ function mockRuntime(): RuntimeSpies {
     destroyPlaceholders: jest.fn(),
     destroyAll: jest.fn(),
     refreshAds: jest.fn(),
+    defineVideo: jest.fn(),
+    displayMoreVideo: jest.fn(),
+    destroyVideoPlaceholders: jest.fn(),
     isEzoicUser: jest.fn(),
     setIsSinglePageApplication: jest.fn(),
     setAutoRefresh: jest.fn(),
@@ -173,6 +179,32 @@ describe('EzoicService', () => {
         service.isEzoicUser(callback, 50);
         drain();
         expect(spies.isEzoicUser).toHaveBeenCalledWith(50, callback);
+      });
+    });
+
+    describe('video passthroughs', () => {
+      it('defineVideo forwards string and object entries to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.defineVideo('video-1', { divID: 'video-2' });
+        drain();
+        expect(spies.defineVideo).toHaveBeenCalledWith('video-1', { divID: 'video-2' });
+      });
+
+      it('displayMoreVideo forwards entries to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.displayMoreVideo('video-1', 'video-2');
+        drain();
+        expect(spies.displayMoreVideo).toHaveBeenCalledWith('video-1', 'video-2');
+      });
+
+      it('destroyVideoPlaceholders forwards div ids to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.destroyVideoPlaceholders('video-1', 'video-2');
+        drain();
+        expect(spies.destroyVideoPlaceholders).toHaveBeenCalledWith('video-1', 'video-2');
       });
     });
 
@@ -396,6 +428,14 @@ describe('EzoicService', () => {
       service.showAds(101);
       service.destroyPlaceholders(101);
       service.destroyAll();
+      expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
+    });
+
+    it('treats video passthroughs as no-ops that touch no window global', () => {
+      const service = TestBed.inject(EzoicService);
+      service.defineVideo('video-1');
+      service.displayMoreVideo('video-1');
+      service.destroyVideoPlaceholders('video-1');
       expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
     });
 

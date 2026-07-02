@@ -9,6 +9,27 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `EzoicVideoComponent` (`<ezoic-video>`) — a standalone component that renders a bare
+  `<div id="<divId>">` (publisher-chosen id, no styling of its own; the publisher sizes it with
+  their own CSS) for an Ezoic outstream/instream video placeholder. Video divs mounted in the same
+  tick are coalesced into a single `displayMoreVideo(...)` call, which both appends the divs to the
+  video registry and loads them; destroying a component tears its placeholder down via
+  `destroyVideoPlaceholders`. Div ids are reference-counted, so a duplicate mounted id warns and
+  tears down only once. An empty `divId` throws at render time. SSR-safe: the div renders on the
+  server and video loads happen only in the browser.
+- `EzoicVideoEmbedComponent` (`<ezoic-video-embed>`) — a standalone Open Video inline embed. It uses
+  its own host element as the embed target (publisher sizes `ezoic-video-embed` directly). On init
+  in the browser it injects `https://open.video/video.js` once (deduplicated by host + pathname) and
+  pushes an entry onto `window.openVideoPlayers` — the canonical Open Video embed global — with the
+  verified `videoID` casing. Inputs: `videoId` (required; empty throws), and optional `playlist`,
+  `float` and `autoplay` (omitted from the entry when unset). SSR-safe: no script is injected and no
+  browser global is touched on the server.
+- `EzoicService` video passthroughs — `defineVideo(...entries)` (clears the video registry and
+  registers entries WITHOUT loading them), `displayMoreVideo(...entries)` (appends entries AND loads
+  them — the video load call) and `destroyVideoPlaceholders(...divIds)`. Each entry is a video div-id
+  string or `{ divID }`; each method is queued on `ezstandalone.cmd` and a no-op during server-side
+  rendering. New `EzoicVideoDefinition` and `EzoicOpenVideoEntry` types and an
+  `EZOIC_OPEN_VIDEO_SCRIPT_URL` constant.
 - Rewarded ads via `withRewardedAds({ loaderUrl })` — a `provideEzoic` feature that injects the
   site-specific rewarded loader (`{host}/porpoiseant/ezadloadrewarded.js`) at startup and enables
   `EzoicRewardedService`. The `loaderUrl` comes from the publisher's Ezoic integration; the SDK does

@@ -1,6 +1,17 @@
-import { EZOIC_CMP_SCRIPT_URLS, EZOIC_SA_SCRIPT_URL, resolveEzoicOptions } from './ezoic-config';
-import { EZOIC_SDK_SCRIPT_ATTR, injectEzoicScripts, injectRewardedLoader } from './script-loader';
-import { EzoicWindow } from './ezstandalone.types';
+import {
+  EZOIC_CMP_SCRIPT_URLS,
+  EZOIC_OPEN_VIDEO_SCRIPT_URL,
+  EZOIC_SA_SCRIPT_URL,
+  resolveEzoicOptions,
+} from './ezoic-config';
+import {
+  EZOIC_SDK_SCRIPT_ATTR,
+  injectEzoicScripts,
+  injectOpenVideoLoader,
+  injectRewardedLoader,
+  pushOpenVideoPlayer,
+} from './script-loader';
+import { EzoicOpenVideoEntry, EzoicWindow } from './ezstandalone.types';
 
 const REWARDED_LOADER_URL = 'https://example.com/porpoiseant/ezadloadrewarded.js';
 
@@ -153,5 +164,90 @@ describe('injectRewardedLoader', () => {
     injectRewardedLoader(document, REWARDED_LOADER_URL);
     injectRewardedLoader(document, `${REWARDED_LOADER_URL}?cb=123&gcb=456`);
     expect(markers().filter((m) => m === 'rewarded')).toHaveLength(1);
+  });
+});
+
+describe('injectOpenVideoLoader', () => {
+  function resetOpenVideo(): void {
+    document.head.querySelectorAll('script').forEach((s) => s.remove());
+    (window as unknown as EzoicWindow).openVideoPlayers = undefined;
+  }
+
+  beforeEach(resetOpenVideo);
+  afterEach(resetOpenVideo);
+
+  it('injects the open.video script as an async external script', () => {
+    injectOpenVideoLoader(document);
+    const loader = injectedScripts().find(
+      (s) => s.getAttribute(EZOIC_SDK_SCRIPT_ATTR) === 'open-video',
+    );
+    expect(loader?.getAttribute('src')).toBe(EZOIC_OPEN_VIDEO_SCRIPT_URL);
+    expect(loader?.async).toBe(true);
+  });
+
+  it('is idempotent: one loader tag when called twice', () => {
+    injectOpenVideoLoader(document);
+    injectOpenVideoLoader(document);
+    expect(markers().filter((m) => m === 'open-video')).toHaveLength(1);
+  });
+
+  it('tolerates a tag already present in the host HTML (host + pathname dedup)', () => {
+    const existing = document.createElement('script');
+    existing.async = true;
+    existing.setAttribute('src', '//open.video/video.js');
+    document.head.appendChild(existing);
+
+    injectOpenVideoLoader(document);
+
+    const tags = Array.from(document.querySelectorAll<HTMLScriptElement>('script[src]')).filter(
+      (s) => (s.getAttribute('src') ?? '').endsWith('/video.js'),
+    );
+    expect(tags).toHaveLength(1);
+    expect(markers()).not.toContain('open-video');
+  });
+});
+
+describe('pushOpenVideoPlayer', () => {
+  function resetOpenVideo(): void {
+    (window as unknown as EzoicWindow).openVideoPlayers = undefined;
+  }
+
+  beforeEach(resetOpenVideo);
+  afterEach(resetOpenVideo);
+
+  it('initializes the array and pushes the entry', () => {
+    const target = document.createElement('div');
+    pushOpenVideoPlayer(document, { target, videoID: 'abc' });
+    const entries = (window as unknown as EzoicWindow).openVideoPlayers;
+    expect(entries).toHaveLength(1);
+    expect(entries?.[0].videoID).toBe('abc');
+    expect(entries?.[0].target).toBe(target);
+  });
+
+  it('appends to an existing array', () => {
+    const first = document.createElement('div');
+    const second = document.createElement('div');
+    pushOpenVideoPlayer(document, { target: first, videoID: 'one' });
+    pushOpenVideoPlayer(document, { target: second, videoID: 'two' });
+    const entries = (window as unknown as EzoicWindow).openVideoPlayers;
+    expect(entries?.map((e) => e.videoID)).toEqual(['one', 'two']);
+  });
+
+  it('preserves the live handler object installed by video.js and forwards the entry to it', () => {
+    // Once open.video/video.js loads it REPLACES window.openVideoPlayers with a
+    // non-array handler whose push() builds each embed. The `|| []` guard must
+    // keep that handler (truthy) and push into it — never reset it to an array.
+    const pushed: EzoicOpenVideoEntry[] = [];
+    const handler = {
+      visited: true,
+      push: (entry: EzoicOpenVideoEntry) => pushed.push(entry),
+    };
+    (window as unknown as { openVideoPlayers: unknown }).openVideoPlayers = handler;
+    const target = document.createElement('div');
+    pushOpenVideoPlayer(document, { target, videoID: 'abc' });
+    expect((window as unknown as { openVideoPlayers: unknown }).openVideoPlayers).toBe(handler);
+    expect(pushed).toHaveLength(1);
+    expect(pushed[0].videoID).toBe('abc');
+    expect(pushed[0].target).toBe(target);
   });
 });

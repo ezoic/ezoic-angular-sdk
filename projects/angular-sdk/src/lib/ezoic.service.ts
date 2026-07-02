@@ -2,7 +2,13 @@ import { DOCUMENT, Injectable, PLATFORM_ID, inject, signal } from '@angular/core
 import { isPlatformBrowser } from '@angular/common';
 import { EZOIC_OPTIONS, resolveEzoicOptions } from './ezoic-config';
 import { injectEzoicScripts } from './script-loader';
-import { EzoicCommand, EzoicPlaceholderArg, Ezstandalone, EzoicWindow } from './ezstandalone.types';
+import {
+  EzoicCommand,
+  EzoicPlaceholderArg,
+  EzoicVideoDefinition,
+  Ezstandalone,
+  EzoicWindow,
+} from './ezstandalone.types';
 import { EzoicRewardedPlacements } from './ezoic-rewarded.types';
 import { MIN_PLACEHOLDER_ID } from './placeholder';
 import { resolveStaticLocationId } from './location-map';
@@ -104,6 +110,39 @@ export class EzoicService {
   /** Re-requests bids for the given header-bidding placeholders by id. */
   refreshAds(...ids: number[]): void {
     this.push(() => this.runtime()?.refreshAds?.(...ids));
+  }
+
+  /**
+   * Clears the video placeholder registry and registers `entries` WITHOUT
+   * loading them. Each entry is a video div-id string or `{ divID }`. Use
+   * {@link displayMoreVideo} to actually load video ads.
+   *
+   * Advanced/imperative use; prefer the `<ezoic-video>` component. Runs inside
+   * the command queue and is a no-op during server-side rendering.
+   */
+  defineVideo(...entries: EzoicVideoDefinition[]): void {
+    this.push(() => this.runtime()?.defineVideo?.(...entries));
+  }
+
+  /**
+   * Appends video placeholders AND loads them — the video load call (the video
+   * analog of `showAds`). Each entry is a video div-id string or `{ divID }`.
+   *
+   * Prefer the `<ezoic-video>` component for declarative placements; this
+   * method is for imperative and dynamic-content flows. Runs inside the command
+   * queue and is a no-op during server-side rendering.
+   */
+  displayMoreVideo(...entries: EzoicVideoDefinition[]): void {
+    this.push(() => this.runtime()?.displayMoreVideo?.(...entries));
+  }
+
+  /**
+   * Tears down the given video placeholders by div id (clears each div and
+   * destroys its player). Runs inside the command queue and is a no-op during
+   * server-side rendering.
+   */
+  destroyVideoPlaceholders(...divIds: string[]): void {
+    this.push(() => this.runtime()?.destroyVideoPlaceholders?.(...divIds));
   }
 
   /**

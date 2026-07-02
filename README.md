@@ -379,6 +379,96 @@ export class UnlockComponent {
   (`status: false`, and `reward: false` where applicable), so you never grant a reward by accident.
 - **SSR:** no loader is injected and no browser global is touched on the server.
 
+## Video
+
+The SDK ships two independent video paths.
+
+### Ezoic video placeholders (`<ezoic-video>`)
+
+Drop an `<ezoic-video>` component where you want an Ezoic outstream/instream video placeholder. It
+renders a bare `<div id="<divId>">` with no styling of its own; you choose the div id and size it
+with your own CSS:
+
+```ts
+import { Component } from '@angular/core';
+import { EzoicVideoComponent } from '@ezoic/angular-sdk';
+
+@Component({
+  selector: 'app-article',
+  imports: [EzoicVideoComponent],
+  template: `<ezoic-video divId="my-video-1" />`,
+  styles: [
+    `
+      #my-video-1 {
+        width: 100%;
+        max-width: 640px;
+        aspect-ratio: 16 / 9;
+      }
+    `,
+  ],
+})
+export class ArticleComponent {}
+```
+
+- **Div id** is publisher-chosen and must be non-empty and unique on the page. An empty `divId`
+  throws at render time.
+- **Batching:** every `<ezoic-video>` that initializes in the same tick is coalesced into a single
+  `displayMoreVideo(...)` call, which both appends the divs to the video registry and loads them.
+- **Teardown:** destroying a component tears its placeholder down via `destroyVideoPlaceholders(divId)`.
+  Div ids are reference-counted, so mounting the same id twice logs a warning (ids must be unique on
+  a page) and tears down only once.
+- **SSR:** the `<div>` renders on the server; video loads happen only in the browser.
+
+### Open Video inline embed (`<ezoic-video-embed>`)
+
+`<ezoic-video-embed>` mounts an Open Video inline player. It uses its own host element as the embed
+target, so you size the element directly:
+
+```ts
+import { Component } from '@angular/core';
+import { EzoicVideoEmbedComponent } from '@ezoic/angular-sdk';
+
+@Component({
+  selector: 'app-clip',
+  imports: [EzoicVideoEmbedComponent],
+  template: `<ezoic-video-embed videoId="your-video-id" playlist="your-playlist" float autoplay />`,
+  styles: [
+    `
+      ezoic-video-embed {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 9;
+      }
+    `,
+  ],
+})
+export class ClipComponent {}
+```
+
+- **Inputs:** `videoId` (required), and optional `playlist`, `float` and `autoplay`. An empty
+  `videoId` throws at render time; `float`/`autoplay` are omitted from the embed entry when unset.
+- On init in the browser the component injects `https://open.video/video.js` once (deduplicated by
+  host + pathname) and pushes an entry onto `window.openVideoPlayers`, which the Open Video script
+  drains to mount the player.
+- **SSR:** no script is injected and no browser global is touched on the server.
+
+### Imperative video control
+
+`EzoicService` exposes the verified video runtime methods for imperative and dynamic-content flows.
+Each runs inside the command queue and is a no-op during server-side rendering:
+
+| Method                             | Purpose                                                                         |
+| ---------------------------------- | ------------------------------------------------------------------------------- |
+| `defineVideo(...entries)`          | Clear the video registry and register entries **without** loading them.         |
+| `displayMoreVideo(...entries)`     | Append entries **and** load them (the video load call). Prefer `<ezoic-video>`. |
+| `destroyVideoPlaceholders(...ids)` | Tear down the given video divs by id.                                           |
+
+Each entry is a video div-id string or the object form `{ divID }`. `defineVideo` clears and
+registers only; use `displayMoreVideo` to actually load. Prefer the `<ezoic-video>` component for
+declarative placements.
+
+See the Ezoic video reference: <https://docs.ezoic.com/docs/ezoicadsadvanced/ezoic-video/>.
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
@@ -408,7 +498,17 @@ Verified, framework-agnostic primitives and the provider/service layer:
   `EzoicRewardedRequestOutcome`, `EzoicRewardedShowOutcome`, `EzoicRewardedStatus`,
   `EzoicRewardedPlacements`, `EzoicRewardedApi`).
 - `EzoicService.initRewardedAds(placements?)` — configures site-wide rewarded placements.
-- Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
+- `EzoicVideoComponent` (`<ezoic-video>`) — declarative Ezoic video placeholder (bare div, no
+  styling), with same-tick batching into a single `displayMoreVideo` call and teardown via
+  `destroyVideoPlaceholders`. SSR-safe.
+- `EzoicVideoEmbedComponent` (`<ezoic-video-embed>`) — Open Video inline embed that injects
+  `https://open.video/video.js` once and pushes an entry onto `window.openVideoPlayers`
+  (`videoId` required; optional `playlist`, `float`, `autoplay`). SSR-safe.
+- `EzoicService` video passthroughs — `defineVideo` (clear + register, no load),
+  `displayMoreVideo` (append + load) and `destroyVideoPlaceholders`, plus the `EzoicVideoDefinition`
+  and `EzoicOpenVideoEntry` types.
+- Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`,
+  `EZOIC_OPEN_VIDEO_SCRIPT_URL`.
 - `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicConfig` / `EzoicCommand` / `EzoicPlaceholder` /
   `EzoicPlaceholderArg` / `Ezstandalone` / `TcfData` / `TcfEventStatus` types.
 - `EZOIC_SDK_VERSION` — the package version.
@@ -425,8 +525,6 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Video wrappers are on the roadmap below.
-
 ## Roadmap
 
 1. Package skeleton — done
@@ -436,7 +534,7 @@ Video wrappers are on the roadmap below.
 5. Zero-config placements (location names) — done
 6. CMP / consent + config — done
 7. Rewarded ads — done
-8. Video (Ezoic outstream/instream + Humix) — current
+8. Video (Ezoic outstream/instream + Open Video embed) — done
 9. Docs + demo app
 
 ## Development

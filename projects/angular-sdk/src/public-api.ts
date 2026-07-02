@@ -17,6 +17,8 @@ export { EzoicService } from './lib/ezoic.service';
 export { EzoicConsentService } from './lib/ezoic-consent.service';
 export { EzoicRewardedService } from './lib/ezoic-rewarded.service';
 export { EzoicAdComponent } from './lib/ezoic-ad.component';
+export { EzoicVideoComponent } from './lib/ezoic-video.component';
+export { EzoicVideoEmbedComponent } from './lib/ezoic-video-embed.component';
 export { withRouterRefresh } from './lib/with-router-refresh';
 export type { RouterRefreshConfig } from './lib/with-router-refresh';
 export { withRewardedAds } from './lib/with-rewarded-ads';
@@ -42,8 +44,15 @@ export {
   EZOIC_SA_SCRIPT_URL,
   EZOIC_CMP_SCRIPT_URLS,
   EZOIC_ANALYTICS_SCRIPT_URL,
+  EZOIC_OPEN_VIDEO_SCRIPT_URL,
 } from './lib/ezoic-config';
 export type { EzoicOptions } from './lib/ezoic-config';
 export type { EzoicConfig } from './lib/ezoic-runtime-config';
 export type { TcfData, TcfEventStatus } from './lib/tcf.types';
-export type { EzoicCommand, EzoicPlaceholderArg, Ezstandalone } from './lib/ezstandalone.types';
+export type {
+  EzoicCommand,
+  EzoicPlaceholderArg,
+  EzoicVideoDefinition,
+  EzoicOpenVideoEntry,
+  Ezstandalone,
+} from './lib/ezstandalone.types';

@@ -57,7 +57,15 @@ Rewarded ads are supported via the `withRewardedAds({ loaderUrl })` provider fea
 `EzoicRewardedService` (`request` / `show` / `requestAndShow` / `requestWithOverlay` /
 `contentLocker`, plus a `status` signal). The `loaderUrl` is the site-specific rewarded loader from
 your Ezoic integration; every method resolves to a non-granting outcome when rewarded ads are
-unavailable, and it is a no-op during server-side rendering. Video wrappers are on the roadmap.
+unavailable, and it is a no-op during server-side rendering.
+
+Video is supported via two components. `<ezoic-video divId="...">` renders a bare video placeholder
+div (publisher-chosen id, publisher-sized) and batches same-tick mounts into a single
+`displayMoreVideo` call, tearing down on destroy. `<ezoic-video-embed videoId="..." [playlist]
+[float] [autoplay]>` mounts an Open Video inline embed by injecting `https://open.video/video.js`
+once and pushing onto `window.openVideoPlayers`. `EzoicService` also exposes `defineVideo` (clear +
+register, no load), `displayMoreVideo` (append + load) and `destroyVideoPlaceholders` for imperative
+flows. All video paths are no-ops during server-side rendering.
 
 ## Documentation
 
