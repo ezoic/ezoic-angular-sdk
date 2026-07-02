@@ -3,6 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { EZOIC_OPTIONS, resolveEzoicOptions } from './ezoic-config';
 import { injectEzoicScripts } from './script-loader';
 import { EzoicCommand, EzoicPlaceholderArg, Ezstandalone, EzoicWindow } from './ezstandalone.types';
+import { EzoicRewardedPlacements } from './ezoic-rewarded.types';
 import { MIN_PLACEHOLDER_ID } from './placeholder';
 import { resolveStaticLocationId } from './location-map';
 import { EzoicConfig } from './ezoic-runtime-config';
@@ -243,6 +244,20 @@ export class EzoicService {
    */
   isOutstreamAllowed(): Promise<boolean> {
     return this.query((rt) => rt.isOutstreamAllowed?.(), false);
+  }
+
+  /**
+   * Configures which site-wide rewarded placements are enabled (anchor,
+   * interstitial, video, side rails). Omitting `placements` leaves the runtime
+   * default (all enabled). Queued on the command queue; a no-op during
+   * server-side rendering.
+   *
+   * This configures the runtime's site-wide rewarded placements. For requesting
+   * and showing individual rewarded ads, use `EzoicRewardedService` (enabled via
+   * `withRewardedAds`).
+   */
+  initRewardedAds(placements?: EzoicRewardedPlacements): void {
+    this.push(() => this.runtime()?.initRewardedAds?.(placements));
   }
 
   /**

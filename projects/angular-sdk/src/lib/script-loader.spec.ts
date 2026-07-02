@@ -1,6 +1,8 @@
 import { EZOIC_CMP_SCRIPT_URLS, EZOIC_SA_SCRIPT_URL, resolveEzoicOptions } from './ezoic-config';
-import { EZOIC_SDK_SCRIPT_ATTR, injectEzoicScripts } from './script-loader';
+import { EZOIC_SDK_SCRIPT_ATTR, injectEzoicScripts, injectRewardedLoader } from './script-loader';
 import { EzoicWindow } from './ezstandalone.types';
+
+const REWARDED_LOADER_URL = 'https://example.com/porpoiseant/ezadloadrewarded.js';
 
 function injectedScripts(): HTMLScriptElement[] {
   return Array.from(
@@ -107,5 +109,49 @@ describe('injectEzoicScripts', () => {
     expect(headerTags).toHaveLength(1);
     // The SDK recognised the existing tag and did not add its own header script.
     expect(markers()).not.toContain('header');
+  });
+});
+
+describe('injectRewardedLoader', () => {
+  function resetRewarded(): void {
+    document.head.querySelectorAll('script').forEach((s) => s.remove());
+    (window as unknown as EzoicWindow).ezRewardedAds = undefined;
+  }
+
+  beforeEach(resetRewarded);
+  afterEach(resetRewarded);
+
+  it('injects the rewarded stub before the loader script', () => {
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    const order = markers();
+    expect(order.indexOf('rewarded-cmd-stub')).toBeLessThan(order.indexOf('rewarded'));
+  });
+
+  it('marks the loader script async and points it at the loader URL', () => {
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    const loader = injectedScripts().find(
+      (s) => s.getAttribute(EZOIC_SDK_SCRIPT_ATTR) === 'rewarded',
+    );
+    expect(loader?.getAttribute('src')).toBe(REWARDED_LOADER_URL);
+    expect(loader?.async).toBe(true);
+  });
+
+  it('initializes window.ezRewardedAds.cmd as an array', () => {
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    const api = (window as unknown as EzoicWindow).ezRewardedAds;
+    expect(Array.isArray(api?.cmd)).toBe(true);
+  });
+
+  it('is idempotent: one loader and one stub when called twice', () => {
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    expect(markers().filter((m) => m === 'rewarded')).toHaveLength(1);
+    expect(markers().filter((m) => m === 'rewarded-cmd-stub')).toHaveLength(1);
+  });
+
+  it('dedupes the loader by host and pathname ignoring query params', () => {
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    injectRewardedLoader(document, `${REWARDED_LOADER_URL}?cb=123&gcb=456`);
+    expect(markers().filter((m) => m === 'rewarded')).toHaveLength(1);
   });
 });

@@ -29,6 +29,7 @@ interface RuntimeSpies {
   isInterstitialAllowed: jest.Mock;
   setOutstreamAllowed: jest.Mock;
   isOutstreamAllowed: jest.Mock;
+  initRewardedAds: jest.Mock;
 }
 
 function mockRuntime(): RuntimeSpies {
@@ -52,6 +53,7 @@ function mockRuntime(): RuntimeSpies {
     isInterstitialAllowed: jest.fn(),
     setOutstreamAllowed: jest.fn(),
     isOutstreamAllowed: jest.fn(),
+    initRewardedAds: jest.fn(),
   };
   (window as unknown as EzoicWindow).ezstandalone = { cmd: [], ...spies };
   return spies;
@@ -241,6 +243,14 @@ describe('EzoicService', () => {
         expect(spies.setInterstitialAllowed).toHaveBeenCalledWith(false, { foo: 1 });
       });
 
+      it('initRewardedAds forwards the placements to the runtime', () => {
+        const spies = mockRuntime();
+        const service = TestBed.inject(EzoicService);
+        service.initRewardedAds({ anchor: false });
+        drain();
+        expect(spies.initRewardedAds).toHaveBeenCalledWith({ anchor: false });
+      });
+
       it('config forwards the typed options object to the runtime', () => {
         const spies = mockRuntime();
         const service = TestBed.inject(EzoicService);
@@ -411,6 +421,7 @@ describe('EzoicService', () => {
       service.setEzoicAnchorAd(true);
       service.setInterstitialAllowed(true);
       service.config({ disableVideo: true });
+      service.initRewardedAds({ anchor: false });
       expect((window as unknown as EzoicWindow).ezstandalone).toBeUndefined();
     });
 

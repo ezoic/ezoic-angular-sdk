@@ -53,7 +53,11 @@ exposes the CMP's TCF v2.2 consent state (`ready`, `tcString`, `gdprApplies`, `e
 signals. See the [repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full
 guide.
 
-Rewarded ads and video wrappers are on the roadmap.
+Rewarded ads are supported via the `withRewardedAds({ loaderUrl })` provider feature and
+`EzoicRewardedService` (`request` / `show` / `requestAndShow` / `requestWithOverlay` /
+`contentLocker`, plus a `status` signal). The `loaderUrl` is the site-specific rewarded loader from
+your Ezoic integration; every method resolves to a non-granting outcome when rewarded ads are
+unavailable, and it is a no-op during server-side rendering. Video wrappers are on the roadmap.
 
 ## Documentation
 

@@ -15,9 +15,27 @@ export type { EzoicPlaceholder } from './lib/placeholder';
 export { provideEzoic } from './lib/provide-ezoic';
 export { EzoicService } from './lib/ezoic.service';
 export { EzoicConsentService } from './lib/ezoic-consent.service';
+export { EzoicRewardedService } from './lib/ezoic-rewarded.service';
 export { EzoicAdComponent } from './lib/ezoic-ad.component';
 export { withRouterRefresh } from './lib/with-router-refresh';
 export type { RouterRefreshConfig } from './lib/with-router-refresh';
+export { withRewardedAds } from './lib/with-rewarded-ads';
+export type { RewardedAdsConfig } from './lib/with-rewarded-ads';
+export type {
+  EzoicRewardedRequestConfig,
+  EzoicRewardedShowConfig,
+  EzoicRewardedRequestAndShowConfig,
+  EzoicRewardedOverlayText,
+  EzoicRewardedOverlayConfig,
+  EzoicRewardedContentLockerAction,
+  EzoicRewardedContentLockerCallToAction,
+  EzoicRewardedContentLockerConfig,
+  EzoicRewardedRequestOutcome,
+  EzoicRewardedShowOutcome,
+  EzoicRewardedStatus,
+  EzoicRewardedPlacements,
+  EzoicRewardedApi,
+} from './lib/ezoic-rewarded.types';
 export type { EzoicFeature, EzoicFeatureKind } from './lib/ezoic-feature';
 export {
   EZOIC_OPTIONS,

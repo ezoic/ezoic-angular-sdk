@@ -12,6 +12,8 @@ const MARKER_CMP = 'cmp';
 const MARKER_CMD_STUB = 'cmd-stub';
 const MARKER_HEADER = 'header';
 const MARKER_ANALYTICS = 'analytics';
+const MARKER_REWARDED_CMD_STUB = 'rewarded-cmd-stub';
+const MARKER_REWARDED = 'rewarded';
 
 interface ScriptAttributes {
   /** Set `async` on the element. */
@@ -61,6 +63,36 @@ export function injectEzoicScripts(doc: Document, options: ResolvedEzoicOptions)
   }
 }
 
+/**
+ * Injects the site-specific rewarded-ads loader into `doc`.
+ *
+ * `loaderUrl` is the publisher's `{host}/porpoiseant/ezadloadrewarded.js` URL;
+ * the SDK never hardcodes it. In order it:
+ *
+ * 1. initializes `window.ezRewardedAds.cmd` directly (so it exists even when a
+ *    strict Content-Security-Policy blocks inline scripts);
+ * 2. appends the inline command-queue stub once;
+ * 3. appends the loader as an async external script.
+ *
+ * Idempotent: the stub is injected at most once, and the loader is deduplicated
+ * by host + pathname, so re-injecting the same loader with different query
+ * params (for example callback overrides) does not add a second tag.
+ *
+ * Callers must ensure this only runs in a browser; it performs no platform
+ * check of its own.
+ */
+export function injectRewardedLoader(doc: Document, loaderUrl: string): void {
+  const head = doc.head;
+  if (!head) {
+    return;
+  }
+
+  ensureRewardedCommandQueue(doc);
+  appendRewardedCommandQueueStub(doc, head);
+
+  appendExternalScript(doc, head, loaderUrl, MARKER_REWARDED, { async: true });
+}
+
 /** Initializes `window.ezstandalone.cmd` without relying on the inline stub. */
 function ensureCommandQueue(doc: Document): void {
   const win = doc.defaultView as EzoicWindow | null;
@@ -84,6 +116,32 @@ function appendCommandQueueStub(doc: Document, head: HTMLHeadElement): void {
   el.textContent =
     'window.ezstandalone = window.ezstandalone || {}; ' +
     'window.ezstandalone.cmd = window.ezstandalone.cmd || [];';
+  head.appendChild(el);
+}
+
+/** Initializes `window.ezRewardedAds.cmd` without relying on the inline stub. */
+function ensureRewardedCommandQueue(doc: Document): void {
+  const win = doc.defaultView as EzoicWindow | null;
+  if (!win) {
+    return;
+  }
+  if (!win.ezRewardedAds) {
+    win.ezRewardedAds = { cmd: [] };
+  } else if (!Array.isArray(win.ezRewardedAds.cmd)) {
+    win.ezRewardedAds.cmd = [];
+  }
+}
+
+/** Appends the inline rewarded command-queue stub once. */
+function appendRewardedCommandQueueStub(doc: Document, head: HTMLHeadElement): void {
+  if (doc.querySelector(`script[${EZOIC_SDK_SCRIPT_ATTR}="${MARKER_REWARDED_CMD_STUB}"]`)) {
+    return;
+  }
+  const el = doc.createElement('script');
+  el.setAttribute(EZOIC_SDK_SCRIPT_ATTR, MARKER_REWARDED_CMD_STUB);
+  el.textContent =
+    'window.ezRewardedAds = window.ezRewardedAds || {}; ' +
+    'window.ezRewardedAds.cmd = window.ezRewardedAds.cmd || [];';
   head.appendChild(el);
 }
 

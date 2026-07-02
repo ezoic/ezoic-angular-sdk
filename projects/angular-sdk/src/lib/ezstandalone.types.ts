@@ -8,6 +8,7 @@
 import type { EzoicPlaceholder } from './placeholder';
 import type { EzoicConfig } from './ezoic-runtime-config';
 import type { TcfApi } from './tcf.types';
+import type { EzoicRewardedApi, EzoicRewardedPlacements } from './ezoic-rewarded.types';
 
 /** A function queued on `ezstandalone.cmd` to run once the runtime is ready. */
 export type EzoicCommand = () => void;
@@ -113,6 +114,12 @@ export interface Ezstandalone {
   ): Promise<boolean> | boolean;
   /** Reports whether floating outstream video is currently allowed. */
   isOutstreamAllowed?(): boolean;
+  /**
+   * Configures which site-wide rewarded placements are enabled. `placements`
+   * defaults to all enabled (`{ anchor, interstitial, video, sideRails }` all
+   * `true`) when omitted. Setter, returns nothing.
+   */
+  initRewardedAds?(placements?: EzoicRewardedPlacements): void;
 }
 
 /** `Window` augmented with the optional Ezoic runtime and TCF CMP globals. */
@@ -120,4 +127,10 @@ export interface EzoicWindow extends Window {
   ezstandalone?: Ezstandalone;
   /** IAB TCF v2.2 CMP API, present once an Ezoic-compatible CMP has loaded. */
   __tcfapi?: TcfApi;
+  /**
+   * Rewarded-ads runtime, present once the site-specific rewarded loader
+   * (`{host}/porpoiseant/ezadloadrewarded.js`) has been injected. Separate from
+   * {@link EzoicWindow.ezstandalone} with its own command queue.
+   */
+  ezRewardedAds?: EzoicRewardedApi;
 }

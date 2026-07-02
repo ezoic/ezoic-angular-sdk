@@ -308,6 +308,77 @@ Signals: `ready` (a usable TC string is available), `tcString`, `gdprApplies`, `
 at their initial values during server-side rendering. Adapt them to observables with `toObservable`
 from `@angular/core/rxjs-interop` if you prefer RxJS.
 
+## Rewarded ads
+
+Rewarded ads let a visitor opt in to watch an ad in exchange for a reward (unlocking content,
+in-app currency, and so on). They run on a runtime separate from `ezstandalone`
+(`window.ezRewardedAds`) loaded by a **site-specific** script. Enable them by adding the
+`withRewardedAds({ loaderUrl })` feature to `provideEzoic`:
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideEzoic, withRewardedAds } from '@ezoic/angular-sdk';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideEzoic(
+      {},
+      withRewardedAds({
+        loaderUrl: 'https://example.com/porpoiseant/ezadloadrewarded.js',
+      }),
+    ),
+  ],
+};
+```
+
+- **Where the loader URL comes from:** it is the `{your-ad-host}/porpoiseant/ezadloadrewarded.js`
+  script from your Ezoic integration (the rewarded snippet in your Ezoic dashboard). The host is
+  per-site, so the SDK never hardcodes it — supply your own. Replace the `https://example.com/...`
+  placeholder above with your real ad host.
+
+Then inject `EzoicRewardedService` and request a rewarded ad. `requestAndShow()` requests and shows
+in a single call and resolves with the outcome:
+
+```ts
+import { Component, inject } from '@angular/core';
+import { EzoicRewardedService } from '@ezoic/angular-sdk';
+
+@Component({ selector: 'app-unlock', template: '' })
+export class UnlockComponent {
+  private readonly rewarded = inject(EzoicRewardedService);
+
+  status = this.rewarded.status; // signal: 'idle' | 'initiated' | 'displayed' | 'closed'
+
+  async unlock(): Promise<void> {
+    const outcome = await this.rewarded.requestAndShow({ rewardName: 'article-unlock' });
+    if (outcome.reward) {
+      // Grant the reward — the user completed the ad.
+    }
+  }
+}
+```
+
+`EzoicRewardedService` methods (each returns a Promise):
+
+| Method                               | Resolves with                                        |
+| ------------------------------------ | ---------------------------------------------------- |
+| `request(config?)`                   | `{ status, msg, adInfo? }` — is an ad ready to show. |
+| `show(config?)`                      | `{ status, reward, msg, adInfo?, userInfo? }`.       |
+| `requestAndShow(config?)`            | `{ status, reward, msg, adInfo?, userInfo? }`.       |
+| `requestWithOverlay(text?, config?)` | `{ status, reward, msg, adInfo?, userInfo? }`.       |
+| `contentLocker(action, config?)`     | `{ status, msg, adInfo? }` via `readyCallback`.      |
+
+- **`status` signal** tracks the runtime's lifecycle from the `ezRewardedInitiated`,
+  `ezRewardedDisplayed` and `ezRewardedClosed` window events.
+- **Site-wide placements:** `EzoicService.initRewardedAds({ anchor, interstitial, video, sideRails })`
+  configures which rewarded placements the runtime enables site-wide (omitted keys default to
+  enabled).
+- **Safety:** during server-side rendering, before the feature initializes, when the runtime is
+  unavailable, or if a runtime call throws, the Promise resolves to a **non-granting** outcome
+  (`status: false`, and `reward: false` where applicable), so you never grant a reward by accident.
+- **SSR:** no loader is injected and no browser global is touched on the server.
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
@@ -326,6 +397,17 @@ Verified, framework-agnostic primitives and the provider/service layer:
 - `EzoicService.resolveLocationId(location)` — resolves a semantic location name to a placeholder id.
 - `withRouterRefresh(config?)` — provider feature that enables single-page-application ad handling
   for Angular Router apps (and the `EzoicFeature` / `RouterRefreshConfig` types).
+- `withRewardedAds({ loaderUrl })` — provider feature that enables rewarded ads by injecting the
+  site-specific rewarded loader at startup (and the `RewardedAdsConfig` type).
+- `EzoicRewardedService` — rewarded-ads runtime wrapper: `request`, `show`, `requestAndShow`,
+  `requestWithOverlay`, `contentLocker` (each resolving to a non-granting fallback when unavailable),
+  a `status` signal, and an `isBrowser` flag. Plus the rewarded types (`EzoicRewardedRequestConfig`,
+  `EzoicRewardedShowConfig`, `EzoicRewardedRequestAndShowConfig`, `EzoicRewardedOverlayText`,
+  `EzoicRewardedOverlayConfig`, `EzoicRewardedContentLockerAction`,
+  `EzoicRewardedContentLockerCallToAction`, `EzoicRewardedContentLockerConfig`,
+  `EzoicRewardedRequestOutcome`, `EzoicRewardedShowOutcome`, `EzoicRewardedStatus`,
+  `EzoicRewardedPlacements`, `EzoicRewardedApi`).
+- `EzoicService.initRewardedAds(placements?)` — configures site-wide rewarded placements.
 - Script URL constants: `EZOIC_SA_SCRIPT_URL`, `EZOIC_CMP_SCRIPT_URLS`, `EZOIC_ANALYTICS_SCRIPT_URL`.
 - `EZOIC_OPTIONS` DI token and the `EzoicOptions` / `EzoicConfig` / `EzoicCommand` / `EzoicPlaceholder` /
   `EzoicPlaceholderArg` / `Ezstandalone` / `TcfData` / `TcfEventStatus` types.
@@ -343,7 +425,7 @@ isValidPlaceholderId(101); // true
 placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 ```
 
-Rewarded ads and video wrappers are on the roadmap below.
+Video wrappers are on the roadmap below.
 
 ## Roadmap
 
@@ -353,8 +435,8 @@ Rewarded ads and video wrappers are on the roadmap below.
 4. SPA routing integration (`withRouterRefresh`) — done
 5. Zero-config placements (location names) — done
 6. CMP / consent + config — done
-7. Rewarded ads — current
-8. Video (Ezoic outstream/instream + Humix)
+7. Rewarded ads — done
+8. Video (Ezoic outstream/instream + Humix) — current
 9. Docs + demo app
 
 ## Development

@@ -4,7 +4,7 @@ import { EnvironmentProviders, Provider } from '@angular/core';
  * Identifies the kind of an {@link EzoicFeature}. Used only for debugging and
  * potential future de-duplication; not part of a public contract.
  */
-export type EzoicFeatureKind = 'router-refresh';
+export type EzoicFeatureKind = 'router-refresh' | 'rewarded-ads';
 
 /**
  * An optional capability passed to {@link provideEzoic} after the options

@@ -9,6 +9,28 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Rewarded ads via `withRewardedAds({ loaderUrl })` — a `provideEzoic` feature that injects the
+  site-specific rewarded loader (`{host}/porpoiseant/ezadloadrewarded.js`) at startup and enables
+  `EzoicRewardedService`. The `loaderUrl` comes from the publisher's Ezoic integration; the SDK does
+  not hardcode it. New `RewardedAdsConfig` type. No-op during server-side rendering.
+- `EzoicRewardedService` — wraps the separate `window.ezRewardedAds` runtime and its own command
+  queue: `request(config?)`, `show(config?)`, `requestAndShow(config?)`,
+  `requestWithOverlay(text?, config?)` and `contentLocker(action, config?)`. Each method returns a
+  Promise that resolves to a non-granting fallback (`status: false`, and `reward: false` where
+  applicable) — during server-side rendering, before initialization, when the runtime cannot be
+  reached, when the runtime method is missing, or when a runtime call throws — rather than leaving the
+  Promise pending.
+  A `status` signal tracks the runtime lifecycle (`'idle'` → `'initiated'` → `'displayed'` →
+  `'closed'`) from the `ezRewardedInitiated`/`ezRewardedDisplayed`/`ezRewardedClosed` window events;
+  `contentLocker` preserves a caller-supplied `readyCallback`. New rewarded types
+  (`EzoicRewardedRequestConfig`, `EzoicRewardedShowConfig`, `EzoicRewardedRequestAndShowConfig`,
+  `EzoicRewardedOverlayText`, `EzoicRewardedOverlayConfig`, `EzoicRewardedContentLockerAction`,
+  `EzoicRewardedContentLockerCallToAction`, `EzoicRewardedContentLockerConfig`,
+  `EzoicRewardedRequestOutcome`, `EzoicRewardedShowOutcome`, `EzoicRewardedStatus`,
+  `EzoicRewardedPlacements`, `EzoicRewardedApi`).
+- `EzoicService.initRewardedAds(placements?)` — configures which site-wide rewarded placements
+  (`anchor`, `interstitial`, `video`, `sideRails`) the runtime enables. Queued on the command queue
+  and a no-op during server-side rendering.
 - Consent and privacy passthroughs on `EzoicService` — `enableConsent()`,
   `setDisablePersonalizedAds(disable)` and `setDisablePersonalizedStatistics(disable)`, each queued on
   the command queue and a no-op during server-side rendering.
