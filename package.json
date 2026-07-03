@@ -18,6 +18,7 @@
     "format:check": "prettier --check .",
     "build:demo": "ng build demo",
     "start:demo": "ng serve demo",
+    "build:demo:single": "npm run build && npm run build:demo && node examples/demo/inline.mjs",
     "pack:lib": "npm run build && cd dist/angular-sdk && npm pack"
   },
   "prettier": {
