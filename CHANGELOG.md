@@ -9,6 +9,18 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Example demo app (`examples/demo`) — a standalone Angular application that exercises every SDK
+  feature against the locally built package: `provideEzoic` with `withRouterRefresh()` and
+  `withRewardedAds({ loaderUrl })`, `<ezoic-ad>` explicit-id and zero-config `location` placements
+  (each passing explicit `sizes`, with the canonical `required: true` default plus a `[required]="false"`
+  opt-out example), incremental (dynamic-content) `showAds`, programmatic SPA navigation,
+  `EzoicConsentService` state, the full `EzoicRewardedService` surface, and both `<ezoic-video>` and
+  `<ezoic-video-embed>`. Buildable in CI via `npm run build:demo` (added a `demo` project to
+  `angular.json` plus `build:demo`/`start:demo` scripts); the CI workflow builds it after the library
+  so it resolves the local `@ezoic/angular-sdk` build. The rewarded loader URL and video ids are
+  documented placeholders to be replaced with the publisher's own values.
+- Contributor scaffolding — `CONTRIBUTING.md`, GitHub issue templates (bug report, feature request),
+  and a pull request template.
 - `EzoicVideoComponent` (`<ezoic-video>`) — a standalone component that renders a bare
   `<div id="<divId>">` (publisher-chosen id, no styling of its own; the publisher sizes it with
   their own CSS) for an Ezoic outstream/instream video placeholder. Video divs mounted in the same
