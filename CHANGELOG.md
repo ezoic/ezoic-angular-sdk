@@ -76,8 +76,11 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ezstandalone.GetGeneratedIdAsync`; before then it falls back to the SDK's static name-to-id map
   (all documented location names and aliases). Provide exactly one of `[id]` or `location` (an error
   is thrown otherwise). Resolved ids flow through the same batching and teardown path as `[id]`;
-  unknown location names warn and request no ad. Location placeholders resolve in the browser only,
-  so their div is not rendered during server-side rendering.
+  unknown location names warn and request no ad. Location placements default to `required: true`
+  (opt out via `[required]="false"`) and should pass `[sizes]` (a dev-mode warning is logged when
+  omitted), because zero-config 900–999 placeholders have no dashboard-configured sizing.
+  Location placeholders resolve in the browser only, so their div is not rendered during
+  server-side rendering.
 - `EzoicService.resolveLocationId(location)` — resolves a semantic location name to a placeholder id
   (runtime helper when available, static map otherwise); returns `null` for an unknown name and
   during server-side rendering.
@@ -100,8 +103,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `sizes` inputs mapping to the verified `showAds` object form. Placeholders mounted in the same tick
   are coalesced into a single `showAds(...)` call (the runtime applies its own debounce on top);
   destroying a component tears its placeholder down via `destroyPlaceholders`. Ids are
-  reference-counted, so a duplicate mounted id warns and tears down only once. SSR-safe: the div
-  renders on the server and ad requests happen only in the browser.
+  reference-counted, so a duplicate mounted id warns and tears down only once. A dev-mode console
+  warning is logged when a placement is requested without `sizes` (standalone placeholders have no
+  dashboard-configured sizing). SSR-safe: the div renders on the server and ad requests happen only
+  in the browser.
 - `EzoicService` display passthroughs — `showAds`, `displayMore`, `destroyPlaceholders`,
   `destroyAll`, `refreshAds` and `isEzoicUser`, each queued on `ezstandalone.cmd` and a no-op during
   server-side rendering, for imperative and dynamic-content (infinite-scroll) flows.

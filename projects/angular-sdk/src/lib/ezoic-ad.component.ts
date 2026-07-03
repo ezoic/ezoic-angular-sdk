@@ -7,6 +7,7 @@ import {
   computed,
   inject,
   input,
+  isDevMode,
   numberAttribute,
   signal,
 } from '@angular/core';
@@ -28,11 +29,15 @@ import { EZOIC_PLACEHOLDER_ID_PREFIX, placeholderElementId } from './placeholder
  * location-based placeholder resolves its id in the browser only, so its div is
  * not rendered during server-side rendering.
  *
+ * Every placement should pass explicit `sizes` (standalone Ezoic placeholders
+ * have no dashboard-configured sizing, so a dev-mode warning is logged when
+ * `sizes` is omitted). A `location` (zero-config) placement defaults to
+ * `required: true` — opt out with `[required]="false"`.
+ *
  * @example
  * ```html
- * <ezoic-ad [id]="101" />
- * <ezoic-ad [id]="102" required [sizes]="['728x90', '320x50']" />
- * <ezoic-ad location="under_first_paragraph" />
+ * <ezoic-ad [id]="101" required [sizes]="['728x90', '320x50']" />
+ * <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
  * ```
  *
  * @see https://docs.ezoic.com/docs/ezoicads/integration/
@@ -63,8 +68,16 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
    */
   readonly location = input<string | undefined>(undefined);
 
-  /** Request the ad as required (must-fill). Defaults to `false`. */
-  readonly required = input(false, { transform: booleanAttribute });
+  /**
+   * Request the ad as required (must-fill). An explicit-`[id]` placement defaults
+   * to `false`; a `location` (zero-config) placement defaults to `true` because
+   * zero-config placeholders have no dashboard-configured sizing — pass
+   * `[required]="false"` to opt a location placement out.
+   */
+  readonly required = input<boolean | undefined, unknown>(undefined, {
+    transform: (value: unknown): boolean | undefined =>
+      value == null ? undefined : booleanAttribute(value),
+  });
 
   /** Ad sizes to request, each in `WIDTHxHEIGHT` form (for example `"728x90"`). */
   readonly sizes = input<readonly string[]>([]);
@@ -104,7 +117,7 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
       // Validate the publisher-supplied id (throws RangeError when out of
       // range), then register synchronously so id-based ads batch in one tick.
       placeholderElementId(id as number);
-      this.activate(id as number);
+      this.activate(id as number, false);
       return;
     }
 
@@ -124,7 +137,7 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
         );
         return;
       }
-      this.activate(resolved);
+      this.activate(resolved, true);
     });
   }
 
@@ -137,9 +150,19 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
   }
 
   /** Records the resolved id, renders the div, and requests the placeholder. */
-  private activate(id: number): void {
+  private activate(id: number, defaultRequired: boolean): void {
     this.registeredId = id;
     this.resolvedId.set(id);
-    this.registry.register({ id, required: this.required(), sizes: [...this.sizes()] });
+    const required = this.required() ?? defaultRequired;
+    const sizes = [...this.sizes()];
+    if (isDevMode() && this.ezoic.isBrowser && sizes.length === 0) {
+      const label = this.location() ? `location "${this.location() as string}"` : `id ${id}`;
+      console.warn(
+        `[ezoic] <ezoic-ad> ${label} was requested without [sizes]. Standalone Ezoic ` +
+          `placeholders have no dashboard-configured sizing, so pass explicit sizes such as ` +
+          `[sizes]="['728x90', '320x50']" (with required) so the ad can fill.`,
+      );
+    }
+    this.registry.register({ id, required, sizes });
   }
 }

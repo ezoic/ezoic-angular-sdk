@@ -25,13 +25,20 @@ class HostComponent {
 interface FlexSpec {
   id?: number;
   location?: string;
+  sizes?: string[];
+  required?: boolean;
 }
 
 @Component({
   imports: [EzoicAdComponent],
   template: `
     @for (ad of ads; track $index) {
-      <ezoic-ad [id]="ad.id" [location]="ad.location"></ezoic-ad>
+      <ezoic-ad
+        [id]="ad.id"
+        [location]="ad.location"
+        [sizes]="ad.sizes ?? []"
+        [required]="ad.required"
+      ></ezoic-ad>
     }
   `,
 })
@@ -85,15 +92,21 @@ describe('EzoicAdComponent', () => {
     let fixture: ComponentFixture<HostComponent>;
     let host: HostComponent;
     let spies: Spies;
+    let warnSpy: jest.SpyInstance;
 
     beforeEach(() => {
       spies = mockRuntime();
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       TestBed.configureTestingModule({
         imports: [HostComponent],
         providers: [{ provide: EZOIC_OPTIONS, useValue: {} }],
       });
       fixture = TestBed.createComponent(HostComponent);
       host = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
     });
 
     it('renders one bare placeholder div per component', () => {
@@ -196,15 +209,21 @@ describe('EzoicAdComponent', () => {
     let fixture: ComponentFixture<FlexHostComponent>;
     let host: FlexHostComponent;
     let spies: Spies;
+    let warnSpy: jest.SpyInstance;
 
     beforeEach(() => {
       spies = mockRuntime();
+      warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       TestBed.configureTestingModule({
         imports: [FlexHostComponent],
         providers: [{ provide: EZOIC_OPTIONS, useValue: {} }],
       });
       fixture = TestBed.createComponent(FlexHostComponent);
       host = fixture.componentInstance;
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
     });
 
     it('resolves a location to a 900-range id via the static fallback and renders it', async () => {
@@ -216,7 +235,7 @@ describe('EzoicAdComponent', () => {
       expect(placeholderDiv(909)).not.toBeNull();
       expect(placeholderDiv(909)?.getAttribute('style')).toBeNull();
       expect(spies.showAds).toHaveBeenCalledTimes(1);
-      expect(spies.showAds).toHaveBeenCalledWith(909);
+      expect(spies.showAds).toHaveBeenCalledWith({ id: 909, required: true, sizes: [] });
     });
 
     it('resolves aliases through the static fallback', async () => {
@@ -238,7 +257,11 @@ describe('EzoicAdComponent', () => {
       await settle();
       drain();
       expect(spies.showAds).toHaveBeenCalledTimes(1);
-      expect(spies.showAds).toHaveBeenCalledWith(900, 909, 911);
+      expect(spies.showAds).toHaveBeenCalledWith(
+        { id: 900, required: true, sizes: [] },
+        { id: 909, required: true, sizes: [] },
+        { id: 911, required: true, sizes: [] },
+      );
     });
 
     it('tears down a location placeholder on destroy', async () => {
@@ -300,7 +323,74 @@ describe('EzoicAdComponent', () => {
       drain();
       expect(getId).toHaveBeenCalledWith('incontent_6');
       expect(placeholderDiv(916)).not.toBeNull();
-      expect(showAds).toHaveBeenCalledWith(916);
+      expect(showAds).toHaveBeenCalledWith({ id: 916, required: true, sizes: [] });
+    });
+  });
+
+  describe('sizing and required defaults', () => {
+    let spies: Spies;
+
+    beforeEach(() => {
+      spies = mockRuntime();
+      TestBed.configureTestingModule({
+        imports: [HostComponent, FlexHostComponent],
+        providers: [{ provide: EZOIC_OPTIONS, useValue: {} }],
+      });
+    });
+
+    afterEach(reset);
+
+    it('location placement defaults to required with the passed sizes', async () => {
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [{ location: 'under_first_paragraph', sizes: ['300x250'] }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(spies.showAds).toHaveBeenCalledWith({ id: 909, required: true, sizes: ['300x250'] });
+    });
+
+    it('location placement opts out of required via [required]=false', async () => {
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [
+        { location: 'under_first_paragraph', sizes: ['300x250'], required: false },
+      ];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(spies.showAds).toHaveBeenCalledWith({ id: 909, required: false, sizes: ['300x250'] });
+    });
+
+    it('explicit-id placement still defaults to not-required', async () => {
+      const fixture = TestBed.createComponent(HostComponent);
+      fixture.componentInstance.ads = [{ id: 101, sizes: ['728x90'] }];
+      fixture.detectChanges();
+      await tick();
+      drain();
+      expect(spies.showAds).toHaveBeenCalledWith({ id: 101, required: false, sizes: ['728x90'] });
+    });
+
+    it('warns in dev mode when a placement is requested without sizes', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const fixture = TestBed.createComponent(HostComponent);
+      fixture.componentInstance.ads = [{ id: 105 }];
+      fixture.detectChanges();
+      await tick();
+      drain();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('sizes'));
+      warn.mockRestore();
+    });
+
+    it('does not warn about sizes when sizes are provided', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const fixture = TestBed.createComponent(HostComponent);
+      fixture.componentInstance.ads = [{ id: 105, sizes: ['728x90'] }];
+      fixture.detectChanges();
+      await tick();
+      drain();
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
+      warn.mockRestore();
     });
   });
 });

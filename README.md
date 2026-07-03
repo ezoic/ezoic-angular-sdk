@@ -105,7 +105,7 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
   selector: 'app-article',
   imports: [EzoicAdComponent],
   template: `
-    <ezoic-ad [id]="101" />
+    <ezoic-ad [id]="101" required [sizes]="['728x90', '320x50']" />
     <p>…article content…</p>
     <ezoic-ad [id]="102" required [sizes]="['728x90', '320x50']" />
   `,
@@ -120,7 +120,9 @@ export class ArticleComponent {}
   `showAds(...)` call. The Ezoic runtime applies its own debounce on top, so the SDK adds no extra
   timer.
 - **`required` / `sizes`** map to the verified `showAds` object form
-  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`).
+  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`). Passing
+  `[sizes]` is expected for every standalone placement — standalone placeholders have no
+  dashboard-configured sizing, so the SDK logs a dev-mode console warning when `sizes` is omitted.
 - **Teardown:** when a component is destroyed the placeholder is torn down via
   `destroyPlaceholders(id)`. Ids are reference-counted, so mounting the same id twice logs a warning
   (ids must be unique on a page) and tears down only once.
@@ -136,17 +138,20 @@ the semantic name to a reserved 900–999 placeholder id:
   selector: 'app-article',
   imports: [EzoicAdComponent],
   template: `
-    <ezoic-ad location="top_of_page" />
+    <ezoic-ad location="top_of_page" required [sizes]="['728x90', '320x50']" />
     <p>…first paragraph…</p>
-    <ezoic-ad location="under_first_paragraph" />
+    <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
     <p>…more content…</p>
-    <ezoic-ad location="mid_content" />
+    <ezoic-ad location="mid_content" required [sizes]="['300x250']" />
   `,
 })
 export class ArticleComponent {}
 ```
 
 - Provide **exactly one** of `[id]` or `location` on a component; supplying both or neither throws.
+- Location placements default to `required: true` (opt out with `[required]="false"`) and MUST pass
+  `[sizes]` (a dev-mode warning is logged when omitted), because zero-config 900–999 placeholders
+  have no dashboard-configured sizing — the client-passed sizes are the forced sizes.
 - When the Ezoic runtime has loaded, resolution goes through `ezstandalone.GetGeneratedIdAsync`
   (DOM-aware). Before then the SDK falls back to a built-in static name-to-id map, so placements
   work even during the first paint.
