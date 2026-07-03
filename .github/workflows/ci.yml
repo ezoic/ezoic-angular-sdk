@@ -48,5 +48,11 @@ jobs:
       - name: Build single-file demo
         run: node examples/demo/inline.mjs
 
+      - name: Build site-demos app
+        run: npm run build:site-demos
+
+      - name: Build single-file site demos
+        run: node examples/site-demos/inline.mjs
+
       - name: Verify package is publish-ready
         run: cd dist/angular-sdk && npm pack --dry-run

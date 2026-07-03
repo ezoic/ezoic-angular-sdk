@@ -75,6 +75,52 @@
           "defaultConfiguration": "development"
         }
       }
+    },
+    "site-demos": {
+      "projectType": "application",
+      "root": "examples/site-demos",
+      "sourceRoot": "examples/site-demos/src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist/site-demos",
+            "index": "examples/site-demos/src/index.html",
+            "browser": "examples/site-demos/src/main.ts",
+            "tsConfig": "examples/site-demos/tsconfig.app.json",
+            "styles": ["examples/site-demos/src/styles.css"],
+            "assets": [],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "optimization": true,
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "options": {
+            "buildTarget": "site-demos:build"
+          },
+          "configurations": {
+            "production": {
+              "buildTarget": "site-demos:build:production"
+            },
+            "development": {
+              "buildTarget": "site-demos:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        }
+      }
     }
   },
   "cli": {

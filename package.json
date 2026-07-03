@@ -19,6 +19,8 @@
     "build:demo": "ng build demo",
     "start:demo": "ng serve demo",
     "build:demo:single": "npm run build && npm run build:demo && node examples/demo/inline.mjs",
+    "build:site-demos": "ng build site-demos",
+    "build:site-demos:single": "npm run build && npm run build:site-demos && node examples/site-demos/inline.mjs",
     "pack:lib": "npm run build && cd dist/angular-sdk && npm pack"
   },
   "prettier": {
