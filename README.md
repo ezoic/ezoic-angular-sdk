@@ -82,8 +82,7 @@ reorders consent after the header script.
 
 ### Server-side rendering
 
-`provideEzoic()` is SSR-safe: on the server it injects nothing and touches no `window`/`document`
-globals, so it works unchanged with Angular's built-in SSR and Angular Universal.
+See [Server-side rendering (SSR)](#server-side-rendering-ssr) for the full guide.
 
 ### Idempotency
 
@@ -474,6 +473,108 @@ declarative placements.
 
 See the Ezoic video reference: <https://docs.ezoic.com/docs/ezoicadsadvanced/ezoic-video/>.
 
+## Server-side rendering (SSR)
+
+`provideEzoic()` is SSR-safe and needs no special configuration: the same providers work unchanged
+for both a browser build and a server build (Angular's built-in `@angular/ssr` or Angular
+Universal).
+
+- **`provideEzoic()`** injects nothing and touches no `window`/`document` global on the server.
+- **`EzoicService`** — `push()` and every runtime passthrough (`showAds`, `displayMore`,
+  `destroyPlaceholders`, `destroyAll`, `refreshAds`, consent/privacy, config, ad-format toggles,
+  video passthroughs) are no-ops on the server. The `ready` signal stays `false` on the server and
+  only becomes `true` in the browser once the scripts are injected.
+- **`<ezoic-ad>` with `[id]`** renders its bare `<div id="ezoic-pub-ad-placeholder-<id>">` on the
+  server, so the layout is reserved (avoiding a shift); the `showAds` request itself happens only in
+  the browser after hydration.
+- **`<ezoic-ad>` with `location`** does not render server-side — location-to-id resolution
+  (`resolveLocationId`) is browser-only and returns `null` on the server, so the div appears only
+  after hydration.
+- **`<ezoic-video>`** renders its bare div server-side; the video load happens only in the browser.
+- **`<ezoic-video-embed>`** injects no script and pushes nothing on the server.
+- **`EzoicConsentService`** signals (`ready`, `tcString`, `gdprApplies`, `eventStatus`) stay at their
+  initial values on the server (no `__tcfapi` access) — read them in the browser.
+- **`EzoicRewardedService`** methods resolve to a non-granting fallback on the server, so they never
+  hang waiting for a runtime that isn't there.
+
+No configuration is needed to opt in to any of the above — every provider, service and component is
+SSR-safe by default.
+
+## Migration from raw Ezoic snippets
+
+If you already have Ezoic integrated by hand, the SDK replaces the hand-placed scripts and
+per-page `ezstandalone.cmd.push` boilerplate with a single provider and declarative components. The
+consent (CMP) scripts are still injected first, in the same order — you aren't changing your consent
+setup, just how it's loaded.
+
+### Before — raw snippets
+
+```html
+<!-- index.html <head> -->
+<script data-cfasync="false" src="https://cmp.gatekeeperconsent.com/min.js"></script>
+<script data-cfasync="false" src="https://the.gatekeeperconsent.com/cmp.min.js"></script>
+<script>
+  window.ezstandalone = window.ezstandalone || {};
+  ezstandalone.cmd = ezstandalone.cmd || [];
+</script>
+<script async src="https://www.ezojs.com/ezoic/sa.min.js"></script>
+<script src="https://ezoicanalytics.com/analytics.js"></script>
+```
+
+```html
+<!-- page fragment -->
+<div id="ezoic-pub-ad-placeholder-101"></div>
+<script>
+  ezstandalone.cmd.push(function () {
+    ezstandalone.showAds(101);
+  });
+</script>
+```
+
+### After — @ezoic/angular-sdk
+
+```ts
+// app.config.ts
+import { ApplicationConfig } from '@angular/core';
+import { provideEzoic } from '@ezoic/angular-sdk';
+
+export const appConfig: ApplicationConfig = {
+  providers: [provideEzoic()],
+};
+```
+
+```ts
+import { Component } from '@angular/core';
+import { EzoicAdComponent } from '@ezoic/angular-sdk';
+
+@Component({
+  selector: 'app-article',
+  imports: [EzoicAdComponent],
+  template: `<ezoic-ad [id]="101" />`,
+})
+export class ArticleComponent {}
+```
+
+Remove all of the head scripts above — `provideEzoic()` injects them for you, in the same order.
+Every `<ezoic-ad>` that mounts in the same tick is batched into a single `showAds(...)` call, and its
+placeholder is torn down automatically when the component is destroyed, so there's no manual
+`ezstandalone.cmd.push` or teardown code left to maintain.
+
+### Common replacements
+
+| Raw snippet                                                | SDK equivalent                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Head scripts (CMP tags, cmd-queue stub, bundle, analytics) | `provideEzoic()`                                                               |
+| `ezstandalone.cmd.push(() => ezstandalone.showAds(id))`    | `<ezoic-ad [id]="id" />` or `EzoicService.showAds(id)`                         |
+| Manual `destroyPlaceholders` on route change               | Automatic teardown, plus `withRouterRefresh()`                                 |
+| `setIsSinglePageApplication(true)` + manual `newPage()`    | `withRouterRefresh()`                                                          |
+| Hand-picked zero-config placeholder ids                    | `<ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />` |
+| Manual CMP `<script>` tags                                 | Injected by `provideEzoic()` (`cmp: true` default)                             |
+
+If the host page already has Ezoic scripts, injection is idempotent — they won't be duplicated — so
+migration can be incremental. Pass `provideEzoic({ cmp: false })` only if an Ezoic-compatible CMP is
+already loaded elsewhere.
+
 ## What's included
 
 Verified, framework-agnostic primitives and the provider/service layer:
@@ -540,7 +641,7 @@ placeholderElementId(101); // 'ezoic-pub-ad-placeholder-101'
 6. CMP / consent + config — done
 7. Rewarded ads — done
 8. Video (Ezoic outstream/instream + Open Video embed) — done
-9. Docs + demo app
+9. Docs + demo app — done
 
 ## Development
 

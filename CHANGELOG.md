@@ -9,6 +9,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- README: a server-side rendering (SSR) guide and a migration-from-raw-snippets guide.
 - Example demo app (`examples/demo`) — a standalone Angular application that exercises every SDK
   feature against the locally built package: `provideEzoic` with `withRouterRefresh()` and
   `withRewardedAds({ loaderUrl })`, `<ezoic-ad>` explicit-id and zero-config `location` placements
