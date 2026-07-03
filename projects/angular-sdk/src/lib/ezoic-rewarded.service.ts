@@ -129,13 +129,21 @@ export class EzoicRewardedService {
    * Requests and, if available, shows a rewarded ad in a single call. Resolves
    * with the runtime's show outcome, or a non-granting fallback when rewarded
    * ads are unavailable.
+   *
+   * The SDK always requests `alwaysCallback` from the runtime internally —
+   * this is not configurable by the caller — so the returned Promise
+   * deterministically resolves on every outcome (fill and watched, no-fill,
+   * cancelled, or closed early), rather than only on a granted reward.
    */
   requestAndShow(config?: EzoicRewardedRequestAndShowConfig): Promise<EzoicRewardedShowOutcome> {
     return this.invoke<EzoicRewardedShowOutcome>((api, resolve) => {
       if (typeof api.requestAndShow !== 'function') {
         return false;
       }
-      api.requestAndShow((data) => resolve(data ?? SHOW_FALLBACK), config);
+      api.requestAndShow((data) => resolve(data ?? SHOW_FALLBACK), {
+        ...config,
+        alwaysCallback: true,
+      });
       return true;
     }, SHOW_FALLBACK);
   }
@@ -144,6 +152,11 @@ export class EzoicRewardedService {
    * Requests a rewarded ad behind a confirmation overlay. Resolves with the
    * runtime's show outcome, or a non-granting fallback when rewarded ads are
    * unavailable.
+   *
+   * The SDK always requests `alwaysCallback` from the runtime internally —
+   * this is not configurable by the caller — so the returned Promise
+   * deterministically resolves on every outcome (fill and watched, no-fill,
+   * cancelled, or closed early), rather than only on a granted reward.
    *
    * @param text Overlay copy overrides.
    * @param config Overlay behaviour configuration.
@@ -156,7 +169,10 @@ export class EzoicRewardedService {
       if (typeof api.requestWithOverlay !== 'function') {
         return false;
       }
-      api.requestWithOverlay((data) => resolve(data ?? SHOW_FALLBACK), text, config);
+      api.requestWithOverlay((data) => resolve(data ?? SHOW_FALLBACK), text, {
+        ...config,
+        alwaysCallback: true,
+      });
       return true;
     }, SHOW_FALLBACK);
   }

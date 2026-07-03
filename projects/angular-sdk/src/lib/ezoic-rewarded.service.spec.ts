@@ -130,7 +130,7 @@ describe('EzoicRewardedService', () => {
 
       it('requestAndShow forwards the config and resolves the callback payload', async () => {
         const { service, spies } = setup();
-        const pending = service.requestAndShow({ rewardName: 'coins', alwaysCallback: true });
+        const pending = service.requestAndShow({ rewardName: 'coins' });
         drainRewarded();
         expect(spies.requestAndShow).toHaveBeenCalledWith(expect.any(Function), {
           rewardName: 'coins',
@@ -141,16 +141,55 @@ describe('EzoicRewardedService', () => {
         await expect(pending).resolves.toEqual(outcome);
       });
 
+      it('requestAndShow forces alwaysCallback even when the caller does not set it', async () => {
+        const { service, spies } = setup();
+        const pending = service.requestAndShow({ rewardName: 'coins' });
+        drainRewarded();
+        expect(spies.requestAndShow).toHaveBeenCalledWith(
+          expect.any(Function),
+          expect.objectContaining({ alwaysCallback: true }),
+        );
+        const decline: EzoicRewardedShowOutcome = {
+          status: true,
+          reward: false,
+          msg: 'ad closed before reward granted',
+        };
+        spies.requestAndShow.mock.calls[0][0](decline);
+        await expect(pending).resolves.toEqual(decline);
+      });
+
       it('requestWithOverlay passes callback, text and config in order', async () => {
         const { service, spies } = setup();
         const text = { header: 'Watch an ad', accept: 'OK', cancel: 'No' };
         const config = { rewardName: 'coins', lockScroll: true };
         const pending = service.requestWithOverlay(text, config);
         drainRewarded();
-        expect(spies.requestWithOverlay).toHaveBeenCalledWith(expect.any(Function), text, config);
+        expect(spies.requestWithOverlay).toHaveBeenCalledWith(expect.any(Function), text, {
+          ...config,
+          alwaysCallback: true,
+        });
         const outcome: EzoicRewardedShowOutcome = { status: true, reward: true, msg: 'done' };
         spies.requestWithOverlay.mock.calls[0][0](outcome);
         await expect(pending).resolves.toEqual(outcome);
+      });
+
+      it('requestWithOverlay forces alwaysCallback even when the caller does not set it', async () => {
+        const { service, spies } = setup();
+        const text = { header: 'Watch an ad' };
+        const pending = service.requestWithOverlay(text, { rewardName: 'coins' });
+        drainRewarded();
+        expect(spies.requestWithOverlay).toHaveBeenCalledWith(
+          expect.any(Function),
+          text,
+          expect.objectContaining({ alwaysCallback: true }),
+        );
+        const noFill: EzoicRewardedShowOutcome = {
+          status: false,
+          reward: false,
+          msg: 'failed to load ad',
+        };
+        spies.requestWithOverlay.mock.calls[0][0](noFill);
+        await expect(pending).resolves.toEqual(noFill);
       });
 
       it('contentLocker forwards the action and a merged readyCallback', async () => {

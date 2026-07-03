@@ -7,6 +7,14 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- `EzoicRewardedService.requestAndShow()` and `requestWithOverlay()` now force `alwaysCallback`
+  internally so the returned Promise always resolves — previously it could hang forever on ad
+  decline (no-fill, user cancel, closed before reward) because the runtime only invokes its
+  callback on those outcomes when `alwaysCallback` is true, which defaulted to false and was not
+  set by the SDK.
+
 ## [1.0.0] - 2026-07-03
 
 ### Added

@@ -40,11 +40,6 @@ export interface EzoicRewardedShowConfig {
 export interface EzoicRewardedRequestAndShowConfig {
   /** Publisher-defined reward name reported back on grant. */
   rewardName?: string;
-  /**
-   * When `true`, the callback fires even for outcomes that would otherwise be
-   * silent (for example a user dismissal).
-   */
-  alwaysCallback?: boolean;
   /** When `true`, still fire the reward callback when there was no fill. */
   rewardOnNoFill?: boolean;
   /** When `true`, show the runtime's loading overlay while the ad is fetched. */
@@ -84,6 +79,18 @@ export interface EzoicRewardedOverlayConfig extends EzoicRewardedRequestAndShowC
   lockScroll?: boolean;
   /** When `true`, skip the confirmation prompt and proceed directly. */
   dontAsk?: boolean;
+}
+
+/**
+ * The `alwaysCallback` flag as the `requestAndShow`/`requestWithOverlay`
+ * runtime methods actually accept it. Deliberately absent from the public
+ * {@link EzoicRewardedRequestAndShowConfig}/{@link EzoicRewardedOverlayConfig}
+ * config types: the SDK always forces this flag internally so its
+ * Promise-wrapped methods deterministically resolve on every outcome, so it is
+ * not a caller-configurable option.
+ */
+interface EzoicRewardedAlwaysCallback {
+  alwaysCallback?: boolean;
 }
 
 /**
@@ -214,21 +221,23 @@ export interface EzoicRewardedApi {
   show?(callback: (data: EzoicRewardedShowOutcome) => void, config?: EzoicRewardedShowConfig): void;
   /**
    * Requests and, if available, shows a rewarded ad in one call. The outcome is
-   * delivered to `callback`.
+   * delivered to `callback`. `config` also accepts `alwaysCallback`, which the
+   * SDK always forces to `true` internally.
    */
   requestAndShow?(
     callback: (data: EzoicRewardedShowOutcome) => void,
-    config?: EzoicRewardedRequestAndShowConfig,
+    config?: EzoicRewardedRequestAndShowConfig & EzoicRewardedAlwaysCallback,
   ): void;
   /**
    * Requests a rewarded ad behind a confirmation overlay. Note the callback is
    * the first argument, then the overlay `text`, then `config`. The outcome is
-   * delivered to `callback`.
+   * delivered to `callback`. `config` also accepts `alwaysCallback`, which the
+   * SDK always forces to `true` internally.
    */
   requestWithOverlay?(
     callback: (data: EzoicRewardedShowOutcome) => void,
     text?: EzoicRewardedOverlayText,
-    config?: EzoicRewardedOverlayConfig,
+    config?: EzoicRewardedOverlayConfig & EzoicRewardedAlwaysCallback,
   ): void;
   /**
    * Locks content behind a rewarded ad. `action` is either a redirect URL or a
