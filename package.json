@@ -1,6 +1,6 @@
 {
   "name": "ezoic-angular-sdk",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Development workspace for @ezoic/angular-sdk — the official Ezoic SDK for Angular.",
   "license": "MIT",
   "private": true,

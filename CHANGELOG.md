@@ -7,6 +7,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-03
+
 ### Added
 
 - README: a server-side rendering (SSR) guide and a migration-from-raw-snippets guide.
@@ -146,4 +148,5 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `MAX_PLACEHOLDER_ID`, `isValidPlaceholderId`, `placeholderElementId`.
 - `EZOIC_SDK_VERSION` export, kept in sync with the package manifest via a unit test.
 
-[Unreleased]: https://github.com/ezoic/ezoic-angular-sdk/commits/master
+[Unreleased]: https://github.com/ezoic/ezoic-angular-sdk/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/ezoic/ezoic-angular-sdk/releases/tag/v1.0.0
