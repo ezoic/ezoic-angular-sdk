@@ -34,8 +34,8 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
   selector: 'app-article',
   imports: [EzoicAdComponent],
   template: `
-    <ezoic-ad [id]="101" required [sizes]="['728x90', '320x50']" />
-    <ezoic-ad [id]="102" required [sizes]="['728x90', '320x50']" />
+    <ezoic-ad [id]="101" />
+    <ezoic-ad [id]="102" />
     <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
   `,
 })
@@ -45,9 +45,10 @@ export class ArticleComponent {}
 Give `<ezoic-ad>` either a numeric `[id]` (1–999) or a semantic `location` name (zero-config, resolved
 to a reserved 900–999 id) — exactly one of the two. Placeholders that mount in the same tick are
 batched into a single `showAds` call and torn down on destroy. Location (zero-config) placements
-default to `required: true` (opt out with `[required]="false"`), and every placement should pass
-`[sizes]` (a dev-mode warning is logged when omitted) since standalone placeholders carry no
-dashboard sizing. `EzoicService` also exposes `showAds`
+default to `required: true` (opt out with `[required]="false"`). Location (zero-config) placements
+should pass `[sizes]` (a dev-mode warning is logged when a location placement omits them) since
+zero-config 900-range placeholders carry no dashboard sizing; an explicit `[id]` placement can be
+sized via the Ezoic dashboard, so `[sizes]` is optional there. `EzoicService` also exposes `showAds`
 / `displayMore` / `destroyPlaceholders` / `destroyAll` / `refreshAds` / `isEzoicUser` /
 `resolveLocationId` for imperative and dynamic-content flows, plus consent/privacy passthroughs
 (`enableConsent`, `setDisablePersonalizedAds`, `setDisablePersonalizedStatistics`), a typed

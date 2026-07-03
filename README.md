@@ -105,9 +105,9 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
   selector: 'app-article',
   imports: [EzoicAdComponent],
   template: `
-    <ezoic-ad [id]="101" required [sizes]="['728x90', '320x50']" />
+    <ezoic-ad [id]="101" />
     <p>…article content…</p>
-    <ezoic-ad [id]="102" required [sizes]="['728x90', '320x50']" />
+    <ezoic-ad [id]="102" />
   `,
 })
 export class ArticleComponent {}
@@ -120,9 +120,9 @@ export class ArticleComponent {}
   `showAds(...)` call. The Ezoic runtime applies its own debounce on top, so the SDK adds no extra
   timer.
 - **`required` / `sizes`** map to the verified `showAds` object form
-  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`). Passing
-  `[sizes]` is expected for every standalone placement — standalone placeholders have no
-  dashboard-configured sizing, so the SDK logs a dev-mode console warning when `sizes` is omitted.
+  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`). An explicit
+  `[id]` maps to a placeholder whose ad sizes can be configured in the Ezoic dashboard, so
+  `[sizes]` is optional for id-based placements (no warning).
 - **Teardown:** when a component is destroyed the placeholder is torn down via
   `destroyPlaceholders(id)`. Ids are reference-counted, so mounting the same id twice logs a warning
   (ids must be unique on a page) and tears down only once.

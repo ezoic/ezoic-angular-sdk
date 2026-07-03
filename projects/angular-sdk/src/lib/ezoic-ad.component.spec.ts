@@ -371,14 +371,14 @@ describe('EzoicAdComponent', () => {
       expect(spies.showAds).toHaveBeenCalledWith({ id: 101, required: false, sizes: ['728x90'] });
     });
 
-    it('warns in dev mode when a placement is requested without sizes', async () => {
+    it('does not warn about sizes for an explicit-[id] placement without sizes', async () => {
       const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       const fixture = TestBed.createComponent(HostComponent);
       fixture.componentInstance.ads = [{ id: 105 }];
       fixture.detectChanges();
       await tick();
       drain();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('sizes'));
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
       warn.mockRestore();
     });
 
@@ -388,6 +388,30 @@ describe('EzoicAdComponent', () => {
       fixture.componentInstance.ads = [{ id: 105, sizes: ['728x90'] }];
       fixture.detectChanges();
       await tick();
+      drain();
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
+      warn.mockRestore();
+    });
+
+    it('warns in dev mode when a location placement is requested without sizes', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [{ location: 'top_of_page' }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
+      drain();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
+      warn.mockRestore();
+    });
+
+    it('does not warn about sizes when a location placement passes sizes', async () => {
+      const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+      const fixture = TestBed.createComponent(FlexHostComponent);
+      fixture.componentInstance.ads = [{ location: 'top_of_page', sizes: ['300x250'] }];
+      fixture.detectChanges();
+      await settle();
+      fixture.detectChanges();
       drain();
       expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
       warn.mockRestore();

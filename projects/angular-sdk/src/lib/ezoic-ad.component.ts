@@ -29,14 +29,16 @@ import { EZOIC_PLACEHOLDER_ID_PREFIX, placeholderElementId } from './placeholder
  * location-based placeholder resolves its id in the browser only, so its div is
  * not rendered during server-side rendering.
  *
- * Every placement should pass explicit `sizes` (standalone Ezoic placeholders
- * have no dashboard-configured sizing, so a dev-mode warning is logged when
- * `sizes` is omitted). A `location` (zero-config) placement defaults to
- * `required: true` — opt out with `[required]="false"`.
+ * A `location` (zero-config, 900-range) placement has no dashboard-configured
+ * sizing, so it should pass explicit `sizes` and defaults to `required: true`
+ * (a dev-mode warning is logged when a location placement omits `sizes`) —
+ * opt out of required with `[required]="false"`. An explicit `[id]`
+ * placement maps to a placeholder whose sizes can be configured in the Ezoic
+ * dashboard, so `[sizes]` is optional there.
  *
  * @example
  * ```html
- * <ezoic-ad [id]="101" required [sizes]="['728x90', '320x50']" />
+ * <ezoic-ad [id]="101" />
  * <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
  * ```
  *
@@ -155,12 +157,17 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
     this.resolvedId.set(id);
     const required = this.required() ?? defaultRequired;
     const sizes = [...this.sizes()];
-    if (isDevMode() && this.ezoic.isBrowser && sizes.length === 0) {
-      const label = this.location() ? `location "${this.location() as string}"` : `id ${id}`;
+    // Only zero-config (location) placements need explicit sizes. An explicit
+    // [id] maps to a placeholder whose ad sizes can be configured in the Ezoic
+    // dashboard, so a missing-[sizes] warning there would be a false positive.
+    // A 900-range location placeholder has no dashboard-configured sizing, so
+    // warn (dev-mode, browser-only) when it is requested without sizes.
+    const location = this.location();
+    if (isDevMode() && this.ezoic.isBrowser && location && sizes.length === 0) {
       console.warn(
-        `[ezoic] <ezoic-ad> ${label} was requested without [sizes]. Standalone Ezoic ` +
-          `placeholders have no dashboard-configured sizing, so pass explicit sizes such as ` +
-          `[sizes]="['728x90', '320x50']" (with required) so the ad can fill.`,
+        `[ezoic] <ezoic-ad> location "${location}" was requested without [sizes]. ` +
+          `Zero-config (900-range) Ezoic placeholders have no dashboard-configured sizing, ` +
+          `so pass explicit sizes such as [sizes]="['300x250']" (with required) so the ad can fill.`,
       );
     }
     this.registry.register({ id, required, sizes });

@@ -104,9 +104,10 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   are coalesced into a single `showAds(...)` call (the runtime applies its own debounce on top);
   destroying a component tears its placeholder down via `destroyPlaceholders`. Ids are
   reference-counted, so a duplicate mounted id warns and tears down only once. A dev-mode console
-  warning is logged when a placement is requested without `sizes` (standalone placeholders have no
-  dashboard-configured sizing). SSR-safe: the div renders on the server and ad requests happen only
-  in the browser.
+  warning is logged when a `location` (zero-config) placement is requested without `sizes`
+  (900-range placeholders have no dashboard-configured sizing); explicit `[id]` placements can be
+  sized in the Ezoic dashboard, so `[sizes]` is optional there. SSR-safe: the div renders on the
+  server and ad requests happen only in the browser.
 - `EzoicService` display passthroughs — `showAds`, `displayMore`, `destroyPlaceholders`,
   `destroyAll`, `refreshAds` and `isEzoicUser`, each queued on `ezstandalone.cmd` and a no-op during
   server-side rendering, for imperative and dynamic-content (infinite-scroll) flows.
