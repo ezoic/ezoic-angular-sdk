@@ -88,8 +88,8 @@ export class ServicePlaygroundComponent {
     this.ezoic.push(() => this.eventLog.add('Custom ezstandalone.cmd command ran'));
     this.ezoic.showAds({ id: 105, required: false, sizes: ['300x250'] });
     this.ezoic.displayMore(106);
-    this.ezoic.refreshAds(101);
-    this.eventLog.add('Display: push + showAds(105) + displayMore(106) + refreshAds(101)');
+    this.ezoic.refreshAds(113);
+    this.eventLog.add('Display: push + showAds(105) + displayMore(106) + refreshAds(113)');
   }
 
   /** Registers and loads an extra video placeholder imperatively. */

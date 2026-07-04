@@ -57,7 +57,7 @@ const SCENARIOS = [
       'provideEzoic({}, withRouterRefresh(), withRewardedAds({ loaderUrl: REWARDED_LOADER_URL }))\n' +
       '\n' +
       '<!-- display.component.ts template — one explicit-id placement -->\n' +
-      '<ezoic-ad [id]="101" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
+      '<ezoic-ad [id]="113" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
   },
   {
     slug: 'zero-config',

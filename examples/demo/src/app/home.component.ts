@@ -28,7 +28,7 @@ import { DemoStateService } from './demo-state.service';
 
     <h2>Explicit-id placement</h2>
     <p>An explicit id is sized in the Ezoic dashboard, so no sizes are passed.</p>
-    <ezoic-ad [id]="101" />
+    <ezoic-ad [id]="113" />
 
     <h2>Best-effort placement (required opt-out)</h2>
     <p>
