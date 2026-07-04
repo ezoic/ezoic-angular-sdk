@@ -21,9 +21,8 @@ import { EventLogService } from './event-log.service';
     <ezoic-ad [id]="910" [required]="true" [sizes]="['728x90', '320x50']" />
 
     <p>
-      Explicit-id placements normally rely on sizing configured in the Ezoic dashboard for that id.
-      Here <code>[sizes]</code> and <code>[required]</code> are passed explicitly only for
-      illustration, so the placement is self-describing on this standalone page.
+      Generated ids carry no dashboard sizing, so <code>[sizes]</code> and <code>[required]</code>
+      are passed explicitly — the canonical pairing.
     </p>
   `,
 })
