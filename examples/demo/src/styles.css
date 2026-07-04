@@ -116,13 +116,13 @@ button {
 #demo-video-slot-2 {
   display: block;
   width: 100%;
-  max-width: 640px;
+  max-width: 900px;
   min-height: 200px;
 }
 
 ezoic-video-embed {
   display: block;
   width: 100%;
-  max-width: 640px;
+  max-width: 900px;
   min-height: 200px;
 }
