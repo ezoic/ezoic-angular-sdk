@@ -97,7 +97,7 @@ const SCENARIOS = [
       'provideEzoic({}, withRouterRefresh())\n' +
       '\n' +
       '<!-- spa-a mounts [id]=922, spa-b mounts [id]=923 -->\n' +
-      '<ezoic-ad [id]="922" />',
+      '<ezoic-ad [id]="922" [required]="true" [sizes]="[\'300x250\', \'336x280\']" />',
   },
   {
     slug: 'dynamic',
@@ -116,8 +116,8 @@ const SCENARIOS = [
       '\n' +
       '<!-- template -->\n' +
       '@if (showMore()) {\n' +
-      '  <ezoic-ad [id]="915" />\n' +
-      '  <ezoic-ad [id]="916" />\n' +
+      '  <ezoic-ad [id]="915" [required]="true" [sizes]="[\'300x250\', \'336x280\']" />\n' +
+      '  <ezoic-ad [id]="916" [required]="true" [sizes]="[\'300x250\']" />\n' +
       '}',
   },
   {

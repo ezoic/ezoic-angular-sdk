@@ -28,8 +28,8 @@ import { EventLogService } from './event-log.service';
     @if (showMore()) {
       <h2>Dynamically added placements</h2>
       <p>These incontent placements mounted after the button click.</p>
-      <ezoic-ad [id]="915" />
-      <ezoic-ad [id]="916" />
+      <ezoic-ad [id]="915" [required]="true" [sizes]="['300x250', '336x280']" />
+      <ezoic-ad [id]="916" [required]="true" [sizes]="['300x250']" />
     }
   `,
 })

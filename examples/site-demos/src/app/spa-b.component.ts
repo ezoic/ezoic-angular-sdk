@@ -20,7 +20,7 @@ import { EventLogService } from './event-log.service';
       same flow a real single-page app relies on to refresh ads on route changes.
     </p>
 
-    <ezoic-ad [id]="923" />
+    <ezoic-ad [id]="923" [required]="true" [sizes]="['300x250', '336x280']" />
 
     <p><a routerLink="/spa-a">&larr; Back to page A</a></p>
   `,
@@ -29,6 +29,8 @@ export class SpaBComponent {
   private readonly eventLog = inject(EventLogService);
 
   constructor() {
-    this.eventLog.add('SPA scenario page B mounted: <ezoic-ad [id]="923">');
+    this.eventLog.add(
+      'SPA scenario page B mounted: <ezoic-ad [id]="923" required sizes=[300x250,336x280]>',
+    );
   }
 }

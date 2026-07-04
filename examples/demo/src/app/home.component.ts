@@ -4,9 +4,10 @@ import { DemoStateService } from './demo-state.service';
 
 /**
  * Home route. Demonstrates zero-config semantic placements (900-range),
- * an explicit-id placement (dashboard-sized), and dynamic-content placements
+ * an explicit generated-id placement, and dynamic-content placements
  * that mount after initial load when the shell's "Load more ads" button flips
- * the shared `showMoreAds` signal.
+ * the shared `showMoreAds` signal. Generated ids carry no dashboard sizing, so
+ * every placement below passes explicit sizes.
  */
 @Component({
   selector: 'app-home',
@@ -27,8 +28,8 @@ import { DemoStateService } from './demo-state.service';
     <ezoic-ad location="mid_content" required [sizes]="bannerSizes" />
 
     <h2>Explicit-id placement</h2>
-    <p>An explicit id is sized in the Ezoic dashboard, so no sizes are passed.</p>
-    <ezoic-ad [id]="910" />
+    <p>Generated ids carry no dashboard sizing either, so this one passes sizes explicitly too.</p>
+    <ezoic-ad [id]="910" [required]="true" [sizes]="['728x90', '320x50']" />
 
     <h2>Best-effort placement (required opt-out)</h2>
     <p>
@@ -40,8 +41,8 @@ import { DemoStateService } from './demo-state.service';
     @if (demoState.showMoreAds()) {
       <h2>Dynamically added placements</h2>
       <p>These incontent ids mounted after initial load; the SDK batches a follow-up request.</p>
-      <ezoic-ad [id]="915" />
-      <ezoic-ad [id]="916" />
+      <ezoic-ad [id]="915" [required]="true" [sizes]="['300x250', '336x280']" />
+      <ezoic-ad [id]="916" [required]="true" [sizes]="['300x250']" />
     }
   `,
 })

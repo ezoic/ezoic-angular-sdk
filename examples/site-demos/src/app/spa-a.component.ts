@@ -20,7 +20,7 @@ import { EventLogService } from './event-log.service';
       requests page B's fresh — no full page reload.
     </p>
 
-    <ezoic-ad [id]="922" />
+    <ezoic-ad [id]="922" [required]="true" [sizes]="['300x250', '336x280']" />
 
     <p><a routerLink="/spa-b">Go to page B &rarr;</a></p>
   `,
@@ -29,6 +29,8 @@ export class SpaAComponent {
   private readonly eventLog = inject(EventLogService);
 
   constructor() {
-    this.eventLog.add('SPA scenario page A mounted: <ezoic-ad [id]="922">');
+    this.eventLog.add(
+      'SPA scenario page A mounted: <ezoic-ad [id]="922" required sizes=[300x250,336x280]>',
+    );
   }
 }
