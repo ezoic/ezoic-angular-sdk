@@ -28,8 +28,8 @@ import { EventLogService } from './event-log.service';
     @if (showMore()) {
       <h2>Dynamically added placements</h2>
       <p>These incontent placements mounted after the button click.</p>
-      <ezoic-ad [id]="104" />
-      <ezoic-ad [id]="105" />
+      <ezoic-ad [id]="915" />
+      <ezoic-ad [id]="916" />
     }
   `,
 })
@@ -40,7 +40,7 @@ export class DynamicComponent {
   protected readonly showMore = signal(false);
 
   constructor() {
-    this.eventLog.add('Dynamic scenario mounted: extra placements 104/105 hidden until toggled');
+    this.eventLog.add('Dynamic scenario mounted: extra placements 915/916 hidden until toggled');
   }
 
   /** Toggles the dynamic placements and logs the transition. */
@@ -48,7 +48,7 @@ export class DynamicComponent {
     const shown = !this.showMore();
     this.showMore.set(shown);
     this.eventLog.add(
-      `Load-more toggled: extra placements 104/105 ${shown ? 'mounted' : 'removed'}`,
+      `Load-more toggled: extra placements 915/916 ${shown ? 'mounted' : 'removed'}`,
     );
   }
 }

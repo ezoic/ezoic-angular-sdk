@@ -28,7 +28,7 @@ import { DemoStateService } from './demo-state.service';
 
     <h2>Explicit-id placement</h2>
     <p>An explicit id is sized in the Ezoic dashboard, so no sizes are passed.</p>
-    <ezoic-ad [id]="113" />
+    <ezoic-ad [id]="910" />
 
     <h2>Best-effort placement (required opt-out)</h2>
     <p>
@@ -40,8 +40,8 @@ import { DemoStateService } from './demo-state.service';
     @if (demoState.showMoreAds()) {
       <h2>Dynamically added placements</h2>
       <p>These incontent ids mounted after initial load; the SDK batches a follow-up request.</p>
-      <ezoic-ad [id]="102" />
-      <ezoic-ad [id]="103" />
+      <ezoic-ad [id]="915" />
+      <ezoic-ad [id]="916" />
     }
   `,
 })

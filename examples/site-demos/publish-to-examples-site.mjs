@@ -57,7 +57,7 @@ const SCENARIOS = [
       'provideEzoic({}, withRouterRefresh(), withRewardedAds({ loaderUrl: REWARDED_LOADER_URL }))\n' +
       '\n' +
       '<!-- display.component.ts template — one explicit-id placement -->\n' +
-      '<ezoic-ad [id]="113" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
+      '<ezoic-ad [id]="910" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
   },
   {
     slug: 'zero-config',
@@ -96,8 +96,8 @@ const SCENARIOS = [
       '// app.config.ts — refresh ads on router navigation\n' +
       'provideEzoic({}, withRouterRefresh())\n' +
       '\n' +
-      '<!-- spa-a mounts [id]=102, spa-b mounts [id]=103 -->\n' +
-      '<ezoic-ad [id]="102" />',
+      '<!-- spa-a mounts [id]=922, spa-b mounts [id]=923 -->\n' +
+      '<ezoic-ad [id]="922" />',
   },
   {
     slug: 'dynamic',
@@ -116,8 +116,8 @@ const SCENARIOS = [
       '\n' +
       '<!-- template -->\n' +
       '@if (showMore()) {\n' +
-      '  <ezoic-ad [id]="104" />\n' +
-      '  <ezoic-ad [id]="105" />\n' +
+      '  <ezoic-ad [id]="915" />\n' +
+      '  <ezoic-ad [id]="916" />\n' +
       '}',
   },
   {

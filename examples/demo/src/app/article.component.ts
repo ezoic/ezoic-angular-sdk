@@ -17,7 +17,7 @@ import {
   template: `
     <h1>Article</h1>
     <p>A distinct explicit-id placement for this route.</p>
-    <ezoic-ad [id]="104" />
+    <ezoic-ad [id]="919" />
 
     <h2>Inline video embed (Open Video)</h2>
     <ezoic-video-embed videoId="demo-video-id" playlist="demo-playlist" float autoplay />

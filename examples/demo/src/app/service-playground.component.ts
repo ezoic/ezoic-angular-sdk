@@ -86,10 +86,10 @@ export class ServicePlaygroundComponent {
   /** Exercises the imperative display command queue and header-bidding refresh. */
   protected runDisplayPassthroughs(): void {
     this.ezoic.push(() => this.eventLog.add('Custom ezstandalone.cmd command ran'));
-    this.ezoic.showAds({ id: 105, required: false, sizes: ['300x250'] });
-    this.ezoic.displayMore(106);
-    this.ezoic.refreshAds(113);
-    this.eventLog.add('Display: push + showAds(105) + displayMore(106) + refreshAds(113)');
+    this.ezoic.showAds({ id: 917, required: false, sizes: ['300x250'] });
+    this.ezoic.displayMore(918);
+    this.ezoic.refreshAds(910);
+    this.eventLog.add('Display: push + showAds(917) + displayMore(918) + refreshAds(910)');
   }
 
   /** Registers and loads an extra video placeholder imperatively. */
@@ -142,11 +142,11 @@ export class ServicePlaygroundComponent {
 
   /** Tears down the imperatively created display/video placeholders. */
   protected teardownAds(): void {
-    this.ezoic.destroyPlaceholders(105, 106);
+    this.ezoic.destroyPlaceholders(917, 918);
     this.ezoic.destroyVideoPlaceholders('demo-video-slot-2');
     this.ezoic.newPage();
     this.eventLog.add(
-      'Teardown: destroyPlaceholders(105,106) + destroyVideoPlaceholders + newPage',
+      'Teardown: destroyPlaceholders(917,918) + destroyVideoPlaceholders + newPage',
     );
   }
 

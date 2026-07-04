@@ -4,7 +4,7 @@ import { EventLogService } from './event-log.service';
 
 /**
  * "Basic display" scenario. Shows the canonical explicit-id pairing: an ordinary
- * article with one `<ezoic-ad [id]="113">` placement between two paragraphs.
+ * article with one `<ezoic-ad [id]="910">` placement between two paragraphs.
  */
 @Component({
   selector: 'app-display',
@@ -18,7 +18,7 @@ import { EventLogService } from './event-log.service';
       as the component mounts — no manual command queue, no lifecycle wiring.
     </p>
 
-    <ezoic-ad [id]="113" [required]="true" [sizes]="['728x90', '320x50']" />
+    <ezoic-ad [id]="910" [required]="true" [sizes]="['728x90', '320x50']" />
 
     <p>
       Explicit-id placements normally rely on sizing configured in the Ezoic dashboard for that id.
@@ -32,7 +32,7 @@ export class DisplayComponent {
 
   constructor() {
     this.eventLog.add(
-      'Display scenario mounted: <ezoic-ad [id]="113" required sizes=[728x90,320x50]>',
+      'Display scenario mounted: <ezoic-ad [id]="910" required sizes=[728x90,320x50]>',
     );
   }
 }
