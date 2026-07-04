@@ -230,7 +230,7 @@ function renderScenarioPage(scenario, headAssets, bodyInner) {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Reddit+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=20260703">
 ${headAssets}
 </head>
 <body>
@@ -259,7 +259,7 @@ ${bodyInner}
   </article>
 </main>
 
-<script src="/assets/site.js"></script>
+<script src="/assets/site.js?v=20260703"></script>
 </body>
 </html>
 `;
@@ -287,7 +287,7 @@ function renderLandingPage() {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Reddit+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=20260703">
 </head>
 <body>
 <!-- Built from @ezoic/angular-sdk v${sdkVersion} (examples/site-demos) -->
