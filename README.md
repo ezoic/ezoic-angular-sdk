@@ -316,8 +316,8 @@ from `@angular/core/rxjs-interop` if you prefer RxJS.
 
 Rewarded ads let a visitor opt in to watch an ad in exchange for a reward (unlocking content,
 in-app currency, and so on). They run on a runtime separate from `ezstandalone`
-(`window.ezRewardedAds`) loaded by a **site-specific** script. Enable them by adding the
-`withRewardedAds({ loaderUrl })` feature to `provideEzoic`:
+(`window.ezRewardedAds`). Enable them by adding the `withRewardedAds()` feature to `provideEzoic` —
+no loader URL required:
 
 ```ts
 // app.config.ts
@@ -325,21 +325,22 @@ import { ApplicationConfig } from '@angular/core';
 import { provideEzoic, withRewardedAds } from '@ezoic/angular-sdk';
 
 export const appConfig: ApplicationConfig = {
-  providers: [
-    provideEzoic(
-      {},
-      withRewardedAds({
-        loaderUrl: 'https://example.com/porpoiseant/ezadloadrewarded.js',
-      }),
-    ),
-  ],
+  providers: [provideEzoic({}, withRewardedAds())],
 };
 ```
 
-- **Where the loader URL comes from:** it is the `{your-ad-host}/porpoiseant/ezadloadrewarded.js`
-  script from your Ezoic integration (the rewarded snippet in your Ezoic dashboard). The host is
-  per-site, so the SDK never hardcodes it — supply your own. Replace the `https://example.com/...`
-  placeholder above with your real ad host.
+- **No loader URL on Ezoic JS-integrated pages:** because this SDK bootstraps the Ezoic header
+  scripts, the default mode calls `ezstandalone.initRewardedAds(...)` and the Ezoic runtime serves
+  the host-correct rewarded loader (with your domain config) inside its own response and drains the
+  rewarded command queue. You do not supply, and should not hardcode, a per-site loader URL.
+- **Scope the placements (optional):** pass `{ placements: { anchor, interstitial, video, sideRails } }`
+  to control which site-wide rewarded placements the runtime enables (omitted keys default to
+  enabled).
+- **Escape hatch — `withRewardedAds({ loaderUrl })`:** only for pages that are **not** Ezoic
+  JS-integrated (they do not load `sa.min.js` through this SDK). It injects the site-specific
+  `{your-ad-host}/porpoiseant/ezadloadrewarded.js` script (from your Ezoic dashboard rewarded
+  snippet) as a `<script>` tag instead of letting the runtime serve it. `placements` is ignored in
+  this mode.
 
 Then inject `EzoicRewardedService` and request a rewarded ad. `requestAndShow()` requests and shows
 in a single call and resolves with the outcome:
@@ -375,9 +376,10 @@ export class UnlockComponent {
 
 - **`status` signal** tracks the runtime's lifecycle from the `ezRewardedInitiated`,
   `ezRewardedDisplayed` and `ezRewardedClosed` window events.
-- **Site-wide placements:** `EzoicService.initRewardedAds({ anchor, interstitial, video, sideRails })`
-  configures which rewarded placements the runtime enables site-wide (omitted keys default to
-  enabled).
+- **Site-wide placements:** the default `withRewardedAds({ placements })` calls
+  `EzoicService.initRewardedAds({ anchor, interstitial, video, sideRails })` for you at boot; call
+  it directly if you need to reconfigure the runtime's site-wide rewarded placements later (omitted
+  keys default to enabled).
 - **Safety:** during server-side rendering, before the feature initializes, when the runtime is
   unavailable, or if a runtime call throws, the Promise resolves to a **non-granting** outcome
   (`status: false`, and `reward: false` where applicable), so you never grant a reward by accident.
@@ -414,6 +416,12 @@ import { EzoicVideoComponent } from '@ezoic/angular-sdk';
 export class ArticleComponent {}
 ```
 
+- **Requires page-level ads first:** the Ezoic runtime only requests queued video placeholders once
+  the page's ad scripts have loaded — which happens when the page runs some `showAds(...)` (any
+  display placement, e.g. an `<ezoic-ad>` or `EzoicService.showAds`) or `initRewardedAds()` (via
+  `withRewardedAds`). A page whose only Ezoic surface is `<ezoic-video>` never triggers that load, so
+  the video stays queued and never fills. Mount at least one display ad (or enable rewarded ads) on
+  any page that uses `<ezoic-video>`.
 - **Div id** is publisher-chosen and must be non-empty and unique on the page. An empty `divId`
   throws at render time.
 - **Batching:** every `<ezoic-video>` that initializes in the same tick is coalesced into a single

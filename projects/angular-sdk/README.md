@@ -57,15 +57,18 @@ exposes the CMP's TCF v2.2 consent state (`ready`, `tcString`, `gdprApplies`, `e
 signals. See the [repository README](https://github.com/ezoic/ezoic-angular-sdk#readme) for the full
 guide.
 
-Rewarded ads are supported via the `withRewardedAds({ loaderUrl })` provider feature and
-`EzoicRewardedService` (`request` / `show` / `requestAndShow` / `requestWithOverlay` /
-`contentLocker`, plus a `status` signal). The `loaderUrl` is the site-specific rewarded loader from
-your Ezoic integration; every method resolves to a non-granting outcome when rewarded ads are
-unavailable, and it is a no-op during server-side rendering.
+Rewarded ads are supported via the `withRewardedAds()` provider feature and `EzoicRewardedService`
+(`request` / `show` / `requestAndShow` / `requestWithOverlay` / `contentLocker`, plus a `status`
+signal). On an Ezoic JS-integrated page call `withRewardedAds()` with no loader URL: the runtime
+serves the host-correct rewarded loader itself. Pass `withRewardedAds({ loaderUrl })` only as an
+escape hatch on pages that are not Ezoic JS-integrated. Every method resolves to a non-granting
+outcome when rewarded ads are unavailable, and it is a no-op during server-side rendering.
 
 Video is supported via two components. `<ezoic-video divId="...">` renders a bare video placeholder
 div (publisher-chosen id, publisher-sized) and batches same-tick mounts into a single
-`displayMoreVideo` call, tearing down on destroy. `<ezoic-video-embed videoId="..." [playlist]
+`displayMoreVideo` call, tearing down on destroy. It only loads once page-level ads initialize (a
+display placement or rewarded init on the page), so mount at least one `<ezoic-ad>` (or enable
+rewarded ads) alongside it. `<ezoic-video-embed videoId="..." [playlist]
 [float] [autoplay]>` mounts an Open Video inline embed by injecting `https://open.video/video.js`
 once and pushing onto `window.openVideoPlayers`. `EzoicService` also exposes `defineVideo` (clear +
 register, no load), `displayMoreVideo` (append + load) and `destroyVideoPlaceholders` for imperative

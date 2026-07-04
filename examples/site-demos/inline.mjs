@@ -48,7 +48,7 @@ const SCENARIOS = [
   { slug: 'spa', route: 'spa-a', assert: ['spa-b'] },
   { slug: 'dynamic', route: 'dynamic', assert: ['Load more content'] },
   { slug: 'rewarded', route: 'rewarded', assert: ['demo-reward', 'demo-show'] },
-  { slug: 'video', route: 'video', assert: ['demo-video-id', 'demo-video-slot-1'] },
+  { slug: 'video', route: 'video', assert: ['zn0TPhaPiju', 'demo-video-slot-1'] },
 ];
 
 /** Substrings every scenario output must contain (CMP + header script hosts). */

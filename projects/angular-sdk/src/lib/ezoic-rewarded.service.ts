@@ -40,10 +40,13 @@ const REWARDED_EVENTS: readonly (readonly [string, EzoicRewardedStatus])[] = [
  * Wraps the site-specific `window.ezRewardedAds` rewarded-ads runtime as an
  * SSR-safe Angular service.
  *
- * Enable it by adding `withRewardedAds({ loaderUrl })` to `provideEzoic`; that
- * runs {@link EzoicRewardedService.initialize} at application startup with the
- * publisher's `{host}/porpoiseant/ezadloadrewarded.js` loader URL. Each method
- * returns a Promise that resolves to a non-granting fallback outcome — during
+ * Enable it by adding `withRewardedAds()` to `provideEzoic`; that runs
+ * {@link EzoicRewardedService.initialize} at application startup. On an Ezoic
+ * JS-integrated page the runtime serves the rewarded loader itself (default
+ * mode, no script injected); pass `withRewardedAds({ loaderUrl })` only to
+ * inject the site-specific `{host}/porpoiseant/ezadloadrewarded.js` loader on a
+ * page that is not Ezoic JS-integrated. Each method returns a Promise that
+ * resolves to a non-granting fallback outcome — during
  * server-side rendering, before initialization, when the runtime cannot be
  * reached, when the runtime method is missing, or when a runtime call throws —
  * rather than leaving the Promise pending. Like the rest of the SDK's queued
@@ -73,26 +76,41 @@ export class EzoicRewardedService {
   private listeners: { event: string; handler: () => void }[] = [];
 
   /**
-   * Injects the rewarded loader and starts tracking the runtime's lifecycle
-   * events. Invoked once at startup by {@link withRewardedAds}. Browser only,
-   * idempotent, and a no-op during server-side rendering. When `loaderUrl` is
-   * empty or blank it warns and leaves the service uninitialized (so its methods
-   * resolve to non-granting fallbacks).
+   * Starts tracking the runtime's lifecycle events and marks the service usable.
+   * Invoked once at startup by {@link withRewardedAds}. Browser only,
+   * idempotent, and a no-op during server-side rendering.
    *
-   * @param loaderUrl The site-specific `{host}/porpoiseant/ezadloadrewarded.js`
-   *   URL from the publisher's Ezoic integration.
+   * Two modes:
+   *
+   * - **Default (runtime-served, `loaderUrl` omitted):** registers status
+   *   listeners and marks the service initialized **without injecting any
+   *   script**. Commands still buffer on `window.ezRewardedAds.cmd`; the Ezoic
+   *   runtime serves the host-correct rewarded loader in response to
+   *   `ezstandalone.initRewardedAds` (called by {@link withRewardedAds}) and
+   *   drains that queue. This is the correct mode for Ezoic JS-integrated pages.
+   * - **Explicit loader (`loaderUrl` supplied):** injects the site-specific
+   *   `{host}/porpoiseant/ezadloadrewarded.js` loader as a `<script>` tag, for
+   *   pages that are not Ezoic JS-integrated. When a `loaderUrl` is explicitly
+   *   provided but empty or blank it warns and leaves the service uninitialized
+   *   (so its methods resolve to non-granting fallbacks).
+   *
+   * @param loaderUrl Optional site-specific
+   *   `{host}/porpoiseant/ezadloadrewarded.js` URL. Omit it for the default
+   *   runtime-served mode.
    */
-  initialize(loaderUrl: string): void {
+  initialize(loaderUrl?: string): void {
     if (!this.isBrowser || this.initialized) {
       return;
     }
-    if (!loaderUrl || loaderUrl.trim() === '') {
-      console.warn(
-        '[ezoic] withRewardedAds requires a non-empty loaderUrl; rewarded ads are disabled.',
-      );
-      return;
+    if (loaderUrl !== undefined) {
+      if (loaderUrl.trim() === '') {
+        console.warn(
+          '[ezoic] withRewardedAds({ loaderUrl }) was given a blank loaderUrl; rewarded ads are disabled.',
+        );
+        return;
+      }
+      injectRewardedLoader(this.document, loaderUrl);
     }
-    injectRewardedLoader(this.document, loaderUrl);
     this.registerStatusListeners();
     this.initialized = true;
   }
@@ -227,7 +245,7 @@ export class EzoicRewardedService {
     }
     if (!this.initialized) {
       console.warn(
-        '[ezoic] EzoicRewardedService was used before withRewardedAds({ loaderUrl }) ' +
+        '[ezoic] EzoicRewardedService was used before withRewardedAds() ' +
           'initialized it; returning a non-granting outcome.',
       );
       return Promise.resolve(fallback);

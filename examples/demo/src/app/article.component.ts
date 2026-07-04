@@ -21,9 +21,10 @@ import {
     <ezoic-ad [id]="919" [required]="true" [sizes]="['300x250', '336x280']" />
 
     <h2>Inline video embed (Open Video)</h2>
-    <ezoic-video-embed videoId="demo-video-id" playlist="demo-playlist" float autoplay />
+    <ezoic-video-embed videoId="zn0TPhaPiju" float autoplay />
 
     <h2>Ezoic video placeholder</h2>
+    <!-- The [id]=919 display placement above initializes page-level ads so this loads. -->
     <ezoic-video divId="demo-video-slot-1" />
   `,
 })

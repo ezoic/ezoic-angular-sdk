@@ -18,8 +18,19 @@ import { EzoicVideoRegistry } from './ezoic-video.registry';
  * appends and loads them); the placeholder is torn down on destroy via
  * `destroyVideoPlaceholders`.
  *
+ * **Requires page-level ads to initialize first.** The Ezoic runtime only
+ * requests queued video placeholders once the page's ad scripts have loaded,
+ * which happens when the page runs some `showAds(...)` (any display placement —
+ * an `<ezoic-ad>` or `EzoicService.showAds`) or `initRewardedAds()` (via
+ * `withRewardedAds`). A page whose only Ezoic surface is `<ezoic-video>`, with
+ * no display placement and no rewarded init, never triggers that load, so the
+ * `displayMoreVideo` call stays queued and the video never fills. Mount at least
+ * one display ad (or enable rewarded ads) on any page that uses `<ezoic-video>`.
+ *
  * @example
  * ```html
+ * <!-- one display placement on the page initializes page-level ads -->
+ * <ezoic-ad [id]="101" />
  * <ezoic-video divId="my-video-1" />
  * ```
  *

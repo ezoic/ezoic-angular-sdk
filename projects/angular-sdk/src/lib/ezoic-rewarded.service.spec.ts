@@ -92,12 +92,44 @@ describe('EzoicRewardedService', () => {
       expect(markers().filter((m) => m === 'rewarded-cmd-stub')).toHaveLength(1);
     });
 
-    it('warns and stays uninitialized when the loaderUrl is blank', () => {
+    it('warns and stays uninitialized when the loaderUrl is explicitly blank', () => {
       const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       const service = TestBed.inject(EzoicRewardedService);
       service.initialize('   ');
       expect(warn).toHaveBeenCalled();
       expect(markers()).not.toContain('rewarded');
+    });
+
+    describe('runtime-served mode (no loaderUrl)', () => {
+      it('marks the service usable without injecting any script or warning', () => {
+        const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+        const service = TestBed.inject(EzoicRewardedService);
+        service.initialize();
+        expect(warn).not.toHaveBeenCalled();
+        expect(markers()).not.toContain('rewarded');
+        expect(markers()).not.toContain('rewarded-cmd-stub');
+      });
+
+      it('queues methods on ezRewardedAds.cmd and resolves the callback payload', async () => {
+        const service = TestBed.inject(EzoicRewardedService);
+        service.initialize();
+        const spies = installRewardedRuntime();
+        const pending = service.request({ minCPM: 5 });
+        drainRewarded();
+        expect(spies.request).toHaveBeenCalledWith(expect.any(Function), { minCPM: 5 });
+        const outcome: EzoicRewardedRequestOutcome = { status: true, msg: 'ready' };
+        spies.request.mock.calls[0][0](outcome);
+        await expect(pending).resolves.toEqual(outcome);
+      });
+
+      it('buffers a command on the created cmd array before any runtime is present', () => {
+        const service = TestBed.inject(EzoicRewardedService);
+        service.initialize();
+        void service.request();
+        const cmd = (window as unknown as EzoicWindow).ezRewardedAds?.cmd;
+        expect(Array.isArray(cmd)).toBe(true);
+        expect((cmd as (() => void)[]).length).toBe(1);
+      });
     });
 
     describe('runtime methods', () => {

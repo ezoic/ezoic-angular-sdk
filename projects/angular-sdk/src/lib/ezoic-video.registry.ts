@@ -10,6 +10,12 @@ import { EzoicService } from './ezoic.service';
  * pairs it with `defineVideo`, which would double-append). Mounted div ids are
  * reference-counted so a video placeholder is torn down exactly once, when its
  * last component unmounts. Internal: not part of the public API.
+ *
+ * The `displayMoreVideo` call is queued on the command queue but the runtime
+ * only drains queued video requests once page-level ad scripts have loaded
+ * (triggered by a `showAds`/display placement or `initRewardedAds`). A page with
+ * only `<ezoic-video>` and no other ad initialization leaves the request queued;
+ * see {@link EzoicVideoComponent} for the full requirement.
  */
 @Injectable({ providedIn: 'root' })
 export class EzoicVideoRegistry {

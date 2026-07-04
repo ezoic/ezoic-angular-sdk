@@ -53,8 +53,8 @@ const SCENARIOS = [
       'placeholder div the Ezoic runtime scans for and requests the ad as the component mounts — ' +
       'no manual command queue. This is the canonical display integration.',
     snippet:
-      '// app.config.ts — bootstrap the SDK once\n' +
-      'provideEzoic({}, withRouterRefresh(), withRewardedAds({ loaderUrl: REWARDED_LOADER_URL }))\n' +
+      '// app.config.ts — bootstrap the SDK once (rewarded needs no loader URL)\n' +
+      'provideEzoic({}, withRouterRefresh(), withRewardedAds())\n' +
       '\n' +
       '<!-- display.component.ts template — one explicit-id placement -->\n' +
       '<ezoic-ad [id]="910" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
@@ -130,9 +130,13 @@ const SCENARIOS = [
       'Rewarded ads are imperative. The injected <code>EzoicRewardedService</code> exposes ' +
       '<code>request</code>, <code>show</code> and <code>requestAndShow</code>, each returning a ' +
       "Promise that resolves with the runtime's outcome. Each button logs the resolved " +
-      '<code>status</code>/<code>reward</code>/message. Calls resolve to a non-granting fallback ' +
-      'until the site-specific rewarded loader is live.',
+      '<code>status</code>/<code>reward</code>/message. On an Ezoic JS-integrated page ' +
+      '<code>withRewardedAds()</code> needs no loader URL — the Ezoic runtime serves the ' +
+      'host-correct rewarded loader itself once it initializes.',
     snippet:
+      '// app.config.ts — no loader URL needed on a JS-integrated page\n' +
+      'provideEzoic({}, withRewardedAds())\n' +
+      '\n' +
       '// rewarded.component.ts — inject the service, await the outcome\n' +
       'private readonly rewarded = inject(EzoicRewardedService);\n' +
       '\n' +
@@ -148,11 +152,17 @@ const SCENARIOS = [
       'The SDK offers two video surfaces. <code>&lt;ezoic-video-embed&gt;</code> injects the Open ' +
       'Video script and mounts a floating, autoplaying player into its own host element; ' +
       '<code>&lt;ezoic-video&gt;</code> emits a bare div the Ezoic video runtime discovers and ' +
-      'fills, with a publisher-chosen div id.',
+      'fills, with a publisher-chosen div id. The <code>&lt;ezoic-video&gt;</code> placeholder only ' +
+      'loads after page-level ad scripts initialize, so this page also mounts one display ' +
+      '<code>&lt;ezoic-ad&gt;</code> — without a display placement (or rewarded init) the video ' +
+      'request stays queued and never fills.',
     snippet:
       '<!-- video.component.ts template -->\n' +
-      '<ezoic-video-embed videoId="demo-video-id" playlist="demo-playlist" float autoplay />\n' +
-      '<ezoic-video divId="demo-video-slot-1" />',
+      '<ezoic-video-embed videoId="zn0TPhaPiju" float autoplay />\n' +
+      '<ezoic-video divId="demo-video-slot-1" />\n' +
+      '\n' +
+      '<!-- required: a display placement initializes page-level ads so the video loads -->\n' +
+      '<ezoic-ad [id]="926" [required]="true" [sizes]="[\'300x250\', \'336x280\']" />',
   },
 ];
 
