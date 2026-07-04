@@ -68,7 +68,7 @@ function mockRuntime(): RuntimeSpies {
 /** Runs and clears everything currently queued on `ezstandalone.cmd`. */
 function drain(): void {
   const ez = (window as unknown as EzoicWindow).ezstandalone;
-  if (!ez) {
+  if (!ez || !Array.isArray(ez.cmd)) {
     return;
   }
   const queued = [...ez.cmd];
@@ -125,6 +125,34 @@ describe('EzoicService', () => {
       const command = (): void => undefined;
       service.push(command);
       expect((window as unknown as EzoicWindow).ezstandalone?.cmd).toContain(command);
+    });
+
+    it('pushes to the executing queue object the runtime swaps in, without replacing it', () => {
+      const executingPush = jest.fn((f: () => void) => f());
+      const executingCmd = { push: executingPush };
+      (window as unknown as EzoicWindow).ezstandalone = { cmd: executingCmd };
+      const service = TestBed.inject(EzoicService);
+      const command = jest.fn();
+
+      service.push(command);
+
+      // The live executing queue is preserved (not clobbered with a fresh array).
+      expect((window as unknown as EzoicWindow).ezstandalone?.cmd).toBe(executingCmd);
+      expect(executingPush).toHaveBeenCalledWith(command);
+      // The executing object runs the command immediately.
+      expect(command).toHaveBeenCalledTimes(1);
+    });
+
+    it('showAds runs immediately once the runtime has swapped cmd for an executing object', () => {
+      const spies = mockRuntime();
+      // Simulate sa.min.js replacing the buffering array with an executing queue.
+      (window as unknown as EzoicWindow).ezstandalone!.cmd = { push: (f: () => void) => f() };
+      const service = TestBed.inject(EzoicService);
+
+      service.showAds(101);
+
+      // No drain() needed: the executing queue invoked the command synchronously.
+      expect(spies.showAds).toHaveBeenCalledWith(101);
     });
 
     describe('display passthroughs', () => {

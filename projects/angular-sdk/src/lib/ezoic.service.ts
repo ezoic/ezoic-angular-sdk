@@ -55,8 +55,13 @@ export class EzoicService {
 
   /**
    * Queues a function on `ezstandalone.cmd`. Before the header script finishes
-   * loading the function is buffered and run in order once the runtime is
-   * ready; afterwards it runs immediately. No-op during server-side rendering.
+   * loading `cmd` is a plain array and the function is buffered, then run in
+   * order once the runtime is ready; afterwards the runtime has replaced `cmd`
+   * with an executing queue object and the function runs immediately. Both forms
+   * are safe to `push` to, so the queue is created only when absent and an
+   * existing queue (array or executing object) is never replaced — replacing the
+   * executing object would clobber the live queue and silently drop every later
+   * command. No-op during server-side rendering.
    *
    * @param command Function to run inside the Ezoic command queue.
    */
@@ -68,9 +73,9 @@ export class EzoicService {
     if (!win) {
       return;
     }
-    if (!win.ezstandalone) {
+    if (win.ezstandalone == null) {
       win.ezstandalone = { cmd: [] };
-    } else if (!Array.isArray(win.ezstandalone.cmd)) {
+    } else if (win.ezstandalone.cmd == null) {
       win.ezstandalone.cmd = [];
     }
     win.ezstandalone.cmd.push(command);

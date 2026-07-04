@@ -80,6 +80,14 @@ describe('injectEzoicScripts', () => {
     expect(Array.isArray(ez?.cmd)).toBe(true);
   });
 
+  it('does not replace an executing cmd object the runtime already swapped in', () => {
+    const executingCmd = { push: jest.fn((f: () => void) => f()) };
+    (window as unknown as EzoicWindow).ezstandalone = { cmd: executingCmd };
+    injectEzoicScripts(document, resolveEzoicOptions());
+    // The live executing queue is preserved, not clobbered with a fresh array.
+    expect((window as unknown as EzoicWindow).ezstandalone?.cmd).toBe(executingCmd);
+  });
+
   it('does not duplicate scripts when called twice', () => {
     injectEzoicScripts(document, resolveEzoicOptions());
     injectEzoicScripts(document, resolveEzoicOptions());
@@ -151,6 +159,14 @@ describe('injectRewardedLoader', () => {
     injectRewardedLoader(document, REWARDED_LOADER_URL);
     const api = (window as unknown as EzoicWindow).ezRewardedAds;
     expect(Array.isArray(api?.cmd)).toBe(true);
+  });
+
+  it('does not replace an executing cmd object the loader already swapped in', () => {
+    const executingCmd = { push: jest.fn((f: () => void) => f()) };
+    (window as unknown as EzoicWindow).ezRewardedAds = { cmd: executingCmd };
+    injectRewardedLoader(document, REWARDED_LOADER_URL);
+    // The live executing queue is preserved, not clobbered with a fresh array.
+    expect((window as unknown as EzoicWindow).ezRewardedAds?.cmd).toBe(executingCmd);
   });
 
   it('is idempotent: one loader and one stub when called twice', () => {

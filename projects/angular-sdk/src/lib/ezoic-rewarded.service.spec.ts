@@ -30,7 +30,7 @@ function installRewardedRuntime(): RewardedSpies {
 /** Runs and clears everything currently queued on `ezRewardedAds.cmd`. */
 function drainRewarded(): void {
   const api = (window as unknown as EzoicWindow).ezRewardedAds;
-  if (!api) {
+  if (!api || !Array.isArray(api.cmd)) {
     return;
   }
   const queued = [...api.cmd];
@@ -112,6 +112,28 @@ describe('EzoicRewardedService', () => {
         const { service, spies } = setup();
         const pending = service.request({ minCPM: 5 });
         drainRewarded();
+        expect(spies.request).toHaveBeenCalledWith(expect.any(Function), { minCPM: 5 });
+        const outcome: EzoicRewardedRequestOutcome = { status: true, msg: 'ready' };
+        spies.request.mock.calls[0][0](outcome);
+        await expect(pending).resolves.toEqual(outcome);
+      });
+
+      it('pushes to the executing queue the loader swaps in, without replacing it, and resolves', async () => {
+        const service = TestBed.inject(EzoicRewardedService);
+        service.initialize(LOADER_URL);
+        const spies = installRewardedRuntime();
+        // Simulate the loader replacing the buffering array with an executing queue.
+        const executingPush = jest.fn((f: () => void) => f());
+        const executingCmd = { push: executingPush };
+        (window as unknown as EzoicWindow).ezRewardedAds!.cmd = executingCmd;
+
+        const pending = service.request({ minCPM: 5 });
+
+        // The live executing queue is preserved (not clobbered with a fresh array).
+        expect((window as unknown as EzoicWindow).ezRewardedAds?.cmd).toBe(executingCmd);
+        expect(executingPush).toHaveBeenCalledTimes(1);
+        // The executing queue ran the queued command immediately, so request fired
+        // without any drain.
         expect(spies.request).toHaveBeenCalledWith(expect.any(Function), { minCPM: 5 });
         const outcome: EzoicRewardedRequestOutcome = { status: true, msg: 'ready' };
         spies.request.mock.calls[0][0](outcome);
@@ -234,7 +256,8 @@ describe('EzoicRewardedService', () => {
       it('resolves the fallback when the runtime is gone once the command runs', async () => {
         const { service } = setup();
         const pending = service.request();
-        const queued = [...((window as unknown as EzoicWindow).ezRewardedAds?.cmd ?? [])];
+        const rewardedCmd = (window as unknown as EzoicWindow).ezRewardedAds?.cmd;
+        const queued = Array.isArray(rewardedCmd) ? [...rewardedCmd] : [];
         (window as unknown as EzoicWindow).ezRewardedAds = undefined;
         queued.forEach((fn) => fn());
         await expect(pending).resolves.toEqual({

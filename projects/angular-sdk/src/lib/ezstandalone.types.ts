@@ -14,6 +14,16 @@ import type { EzoicRewardedApi, EzoicRewardedPlacements } from './ezoic-rewarded
 export type EzoicCommand = () => void;
 
 /**
+ * The `ezstandalone.cmd` command queue. Before `sa.min.js` initializes it is a
+ * plain array that buffers commands. During initialization the runtime REPLACES
+ * it with an executing queue object whose `push` runs each command immediately
+ * (`{ push(f) { f(); } }`). The SDK must handle both forms and must never
+ * replace an existing queue, or it would clobber the live executing object and
+ * silently drop every later command.
+ */
+export type EzoicCommandQueue = EzoicCommand[] | { push(command: EzoicCommand): void };
+
+/**
  * An argument accepted by `ezstandalone.showAds`: either a bare placeholder id
  * or the full {@link EzoicPlaceholder} object form.
  */
@@ -54,11 +64,12 @@ export interface EzoicOpenVideoEntry {
  */
 export interface Ezstandalone {
   /**
-   * Command queue. Functions pushed before the runtime loads are buffered and
-   * executed in order once it is ready; functions pushed afterwards run
-   * immediately.
+   * Command queue. Before `sa.min.js` initializes this is a plain array that
+   * buffers functions; during initialization the runtime replaces it with an
+   * executing queue object whose `push` runs each function immediately. Either
+   * form is safe to `push` to, so the SDK never replaces an existing queue.
    */
-  cmd: EzoicCommand[];
+  cmd: EzoicCommandQueue;
   /** `true` once the runtime has been enabled for the current pageview. */
   enabled?: boolean;
   /** `true` once the runtime has completed its one-time initialization. */

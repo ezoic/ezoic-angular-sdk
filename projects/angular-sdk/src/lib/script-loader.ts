@@ -141,15 +141,21 @@ export function pushOpenVideoPlayer(doc: Document, entry: EzoicOpenVideoEntry): 
   win.openVideoPlayers.push(entry);
 }
 
-/** Initializes `window.ezstandalone.cmd` without relying on the inline stub. */
+/**
+ * Initializes `window.ezstandalone.cmd` without relying on the inline stub.
+ * Creates the queue only when absent; an existing queue (the buffering array
+ * before `sa.min.js` loads, or the executing object the runtime swaps in during
+ * initialization) is left untouched, so re-running this never clobbers a live
+ * queue.
+ */
 function ensureCommandQueue(doc: Document): void {
   const win = doc.defaultView as EzoicWindow | null;
   if (!win) {
     return;
   }
-  if (!win.ezstandalone) {
+  if (win.ezstandalone == null) {
     win.ezstandalone = { cmd: [] };
-  } else if (!Array.isArray(win.ezstandalone.cmd)) {
+  } else if (win.ezstandalone.cmd == null) {
     win.ezstandalone.cmd = [];
   }
 }
@@ -167,15 +173,21 @@ function appendCommandQueueStub(doc: Document, head: HTMLHeadElement): void {
   head.appendChild(el);
 }
 
-/** Initializes `window.ezRewardedAds.cmd` without relying on the inline stub. */
+/**
+ * Initializes `window.ezRewardedAds.cmd` without relying on the inline stub.
+ * Creates the queue only when absent; an existing queue (the buffering array
+ * before the loader runs, or the executing object the loader swaps in during
+ * initialization) is left untouched, so re-running this never clobbers a live
+ * queue.
+ */
 function ensureRewardedCommandQueue(doc: Document): void {
   const win = doc.defaultView as EzoicWindow | null;
   if (!win) {
     return;
   }
-  if (!win.ezRewardedAds) {
+  if (win.ezRewardedAds == null) {
     win.ezRewardedAds = { cmd: [] };
-  } else if (!Array.isArray(win.ezRewardedAds.cmd)) {
+  } else if (win.ezRewardedAds.cmd == null) {
     win.ezRewardedAds.cmd = [];
   }
 }

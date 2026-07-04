@@ -265,15 +265,21 @@ export class EzoicRewardedService {
    * live `window.ezRewardedAds` at execution time (passing `undefined` when it is
    * gone) and runs `command` with it. Returns `false` when there is no window to
    * queue against, so callers can resolve their fallback instead of hanging.
+   *
+   * Before the loader initializes `cmd` is a plain array that buffers commands;
+   * during initialization the loader replaces it with an executing queue object.
+   * The queue is created only when absent and an existing queue (array or
+   * executing object) is never replaced — replacing the executing object would
+   * clobber the live queue and silently drop every later command.
    */
   private pushRewarded(command: (api: EzoicRewardedApi | undefined) => void): boolean {
     const win = this.document.defaultView as EzoicWindow | null;
     if (!win) {
       return false;
     }
-    if (!win.ezRewardedAds) {
+    if (win.ezRewardedAds == null) {
       win.ezRewardedAds = { cmd: [] };
-    } else if (!Array.isArray(win.ezRewardedAds.cmd)) {
+    } else if (win.ezRewardedAds.cmd == null) {
       win.ezRewardedAds.cmd = [];
     }
     win.ezRewardedAds.cmd.push(() => {

@@ -190,6 +190,16 @@ export interface EzoicRewardedPlacements {
 }
 
 /**
+ * The `ezRewardedAds.cmd` command queue. Before the rewarded loader initializes
+ * it is a plain array that buffers commands; during initialization the loader
+ * REPLACES it with an executing queue object whose `push` runs each command
+ * immediately. The SDK must handle both forms and must never replace an existing
+ * queue, or it would clobber the live executing object and silently drop every
+ * later command.
+ */
+export type EzoicRewardedCommandQueue = (() => void)[] | { push(command: () => void): void };
+
+/**
  * The shape of `window.ezRewardedAds`. Like `ezstandalone`, only the command
  * queue is guaranteed before the loader script finishes; the runtime methods are
  * populated at load time, so they are optional and always invoked through the
@@ -199,12 +209,13 @@ export interface EzoicRewardedApi {
   /** `true` once the rewarded loader has finished initializing the runtime. */
   ready?: boolean;
   /**
-   * Command queue. Functions pushed before the loader is ready are buffered and
-   * executed in order once it is ready; functions pushed afterwards run
-   * immediately. Each function takes no arguments and references
-   * `window.ezRewardedAds` itself.
+   * Command queue. Before the loader initializes this is a plain array that
+   * buffers functions; during initialization the loader replaces it with an
+   * executing queue object whose `push` runs each function immediately. Either
+   * form is safe to `push` to, so the SDK never replaces an existing queue. Each
+   * function takes no arguments and references `window.ezRewardedAds` itself.
    */
-  cmd: (() => void)[];
+  cmd: EzoicRewardedCommandQueue;
   /** Internal registration hook invoked by the loader; rarely called directly. */
   register?(): void;
   /**

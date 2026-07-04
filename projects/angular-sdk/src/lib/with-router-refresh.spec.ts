@@ -29,7 +29,7 @@ function mockRuntime(): RuntimeSpies {
 /** Runs and clears everything currently queued on `ezstandalone.cmd`. */
 function drain(): void {
   const ez = (window as unknown as EzoicWindow).ezstandalone;
-  if (!ez) {
+  if (!ez || !Array.isArray(ez.cmd)) {
     return;
   }
   const queued = [...ez.cmd];
