@@ -70,7 +70,14 @@ export interface Ezstandalone {
    * form is safe to `push` to, so the SDK never replaces an existing queue.
    */
   cmd: EzoicCommandQueue;
-  /** `true` once the runtime has been enabled for the current pageview. */
+  /**
+   * `true` only when a publisher calls the public `enable()`. This is the public
+   * `ezstandalone` wrapper's own flag; the internal standalone instance the
+   * display logic uses tracks a separate flag that is NOT mirrored here, so a
+   * fully successful initial ad load commonly leaves this `false`. Not a reliable
+   * "initial load started" signal on its own — {@link EzoicService.isAdLoadStarted}
+   * combines it with resource-timing and GPT-container checks.
+   */
   enabled?: boolean;
   /** `true` once the runtime has completed its one-time initialization. */
   initialized?: boolean;

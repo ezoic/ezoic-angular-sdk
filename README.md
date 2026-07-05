@@ -332,7 +332,13 @@ export const appConfig: ApplicationConfig = {
 - **No loader URL on Ezoic JS-integrated pages:** because this SDK bootstraps the Ezoic header
   scripts, the default mode calls `ezstandalone.initRewardedAds(...)` and the Ezoic runtime serves
   the host-correct rewarded loader (with your domain config) inside its own response and drains the
-  rewarded command queue. You do not supply, and should not hardcode, a per-site loader URL.
+  rewarded command queue. You do not supply, and should not hardcode, a per-site loader URL. The
+  init call is **deferred, not fired at boot**: the runtime's `initRewardedAds` runs `showAds([12])`
+  internally, and issuing that before the page's first `showAds` has started the initial ad load
+  wedges the whole page. The SDK waits until the initial ad load has started — detected via the
+  `/sa.go` ad request in resource timing, a GPT container rendered inside an Ezoic placeholder, or
+  `ezstandalone.enabled` when a publisher opts into the public `enable()` — before dispatching, or,
+  on a rewarded-only page with no display ads mounted, fires after a short grace window.
 - **Scope the placements (optional):** pass `{ placements: { anchor, interstitial, video, sideRails } }`
   to control which site-wide rewarded placements the runtime enables (omitted keys default to
   enabled).
@@ -376,10 +382,11 @@ export class UnlockComponent {
 
 - **`status` signal** tracks the runtime's lifecycle from the `ezRewardedInitiated`,
   `ezRewardedDisplayed` and `ezRewardedClosed` window events.
-- **Site-wide placements:** the default `withRewardedAds({ placements })` calls
-  `EzoicService.initRewardedAds({ anchor, interstitial, video, sideRails })` for you at boot; call
-  it directly if you need to reconfigure the runtime's site-wide rewarded placements later (omitted
-  keys default to enabled).
+- **Site-wide placements:** the default `withRewardedAds({ placements })` schedules
+  `EzoicService.initRewardedAds({ anchor, interstitial, video, sideRails })` for you (deferred until
+  the initial ad load has started, so it never preempts it — see above); call it directly if you
+  need to reconfigure the runtime's site-wide rewarded placements later (omitted keys default to
+  enabled).
 - **Safety:** during server-side rendering, before the feature initializes, when the runtime is
   unavailable, or if a runtime call throws, the Promise resolves to a **non-granting** outcome
   (`status: false`, and `reward: false` where applicable), so you never grant a reward by accident.

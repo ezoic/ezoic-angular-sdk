@@ -75,6 +75,21 @@ export class EzoicAdRegistry {
     this.ezoic.destroyPlaceholders(id);
   }
 
+  /**
+   * Whether any `<ezoic-ad>` display placeholder is currently mounted on the
+   * page. A mounted placeholder (numeric id, or a semantic `location` resolved
+   * to one) drives the page's initial ad load, so a non-empty mount registry
+   * means the initial load is coming on its own.
+   *
+   * The deferred rewarded-init scheduler ({@link EzoicRewardedInitScheduler})
+   * reads this at its grace deadline to tell a rewarded-only page — where
+   * `initRewardedAds` is itself the ad bootstrap — apart from a page whose
+   * display ads start the load.
+   */
+  hasMountedPlacements(): boolean {
+    return this.mounted.size > 0;
+  }
+
   private scheduleFlush(): void {
     if (this.flushScheduled) {
       return;

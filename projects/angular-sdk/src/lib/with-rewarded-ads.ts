@@ -1,7 +1,7 @@
 import { inject, provideAppInitializer } from '@angular/core';
 import { EzoicFeature } from './ezoic-feature';
+import { EzoicRewardedInitScheduler } from './ezoic-rewarded-init.scheduler';
 import { EzoicRewardedService } from './ezoic-rewarded.service';
-import { EzoicService } from './ezoic.service';
 import { EzoicRewardedPlacements } from './ezoic-rewarded.types';
 
 /**
@@ -57,11 +57,23 @@ export interface RewardedAdsConfig {
  * ```
  *
  * At application boot the default mode initializes {@link EzoicRewardedService}
- * **without injecting any script**, then calls
- * {@link EzoicService.initRewardedAds} so the Ezoic runtime serves the rewarded
- * loader (host-correct, with your domain config) inside its own response and
- * drains `window.ezRewardedAds.cmd`. Inject `EzoicRewardedService` anywhere to
- * request and show rewarded ads.
+ * **without injecting any script**, then schedules
+ * `EzoicService.initRewardedAds` (via {@link EzoicRewardedInitScheduler}) so the
+ * Ezoic runtime serves the rewarded loader (host-correct, with your domain
+ * config) inside its own response and drains `window.ezRewardedAds.cmd`. Inject
+ * `EzoicRewardedService` anywhere to request and show rewarded ads.
+ *
+ * The init call is **deferred, not fired at boot**. The runtime's
+ * `initRewardedAds` runs `showAds([12])` internally, and the app initializer
+ * runs before any `<ezoic-ad>` mounts, so dispatching it immediately would
+ * collide with the page's initial ad load and wedge the whole page (no `sa.go`
+ * request, no ads, rewarded never loads). The scheduler waits until the page's
+ * initial ad load has started — detected via the `/sa.go` ad request in resource
+ * timing, a GPT container rendered inside an Ezoic placeholder, or
+ * `ezstandalone.enabled` when a publisher opts into the public `enable()` —
+ * before dispatching, or, on a rewarded-only page with no display placements
+ * mounted, fires after a short grace window. See {@link EzoicRewardedInitScheduler}
+ * for the full contract.
  *
  * **Escape hatch:** pass `{ loaderUrl }` only for pages that are **not** Ezoic
  * JS-integrated. That keeps the legacy behavior of injecting the site-specific
@@ -88,9 +100,11 @@ export function withRewardedAds(config: RewardedAdsConfig = {}): EzoicFeature {
           return;
         }
         // Default: no script injection — the Ezoic runtime serves the loader in
-        // response to initRewardedAds and drains the rewarded command queue.
+        // response to initRewardedAds and drains the rewarded command queue. The
+        // init is deferred (never fired at boot) so it cannot preempt the page's
+        // initial ad load; the scheduler owns the once-per-page dispatch.
         rewarded.initialize();
-        inject(EzoicService).initRewardedAds(config.placements);
+        inject(EzoicRewardedInitScheduler).schedule(config.placements);
       }),
     ],
   };

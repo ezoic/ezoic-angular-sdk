@@ -15,6 +15,14 @@ import { resolveStaticLocationId } from './location-map';
 import { EzoicConfig } from './ezoic-runtime-config';
 
 /**
+ * Regex matching the sol standalone initial ad request path. That request is
+ * issued to `//g.ezoic.net/sa.go` (via XHR) and is visible as a resource-timing
+ * entry; this matches `/sa.go` immediately followed by a query string or the end
+ * of the entry name. Used by {@link EzoicService.isAdLoadStarted}.
+ */
+const SA_GO_REQUEST_RE = /\/sa\.go(?:\?|$)/;
+
+/**
  * Core Ezoic SDK service. Handles one-time header-script injection at
  * application startup and provides a browser-only, SSR-safe helper for queuing
  * work on the `ezstandalone` command queue.
@@ -350,6 +358,56 @@ export class EzoicService {
         }
       });
     });
+  }
+
+  /**
+   * Whether the page's initial ad load has started. Read synchronously (not
+   * through the command queue) so callers can poll it. The deferred rewarded-init
+   * scheduler ({@link EzoicRewardedInitScheduler}) polls this before dispatching
+   * `initRewardedAds`, because the runtime's `initRewardedAds` runs
+   * `showAds([12])` internally and issuing that before the initial load has
+   * started wedges the whole page.
+   *
+   * `window.ezstandalone.enabled` alone is NOT a reliable signal: the public
+   * `ezstandalone` wrapper object initializes `enabled: false` and only flips it
+   * when a publisher calls the public `enable()`, while the internal standalone
+   * instance the display logic uses tracks its own flag that is never mirrored
+   * back to the wrapper in the normal `showAds` flow. So a fully successful
+   * initial load commonly leaves the public `enabled` at `false`. This returns
+   * `true` when ANY of these hold:
+   *
+   * 1. `window.ezstandalone.enabled === true` — correct when a publisher opts
+   *    into the public `enable()` flow.
+   * 2. A resource-timing entry matches {@link SA_GO_REQUEST_RE} — the direct
+   *    signal that the initial `/sa.go` ad request was issued.
+   * 3. A GPT container is rendered INSIDE an Ezoic placeholder (the
+   *    `[id^="ezoic-pub-ad-placeholder-"] [id^="div-gpt-ad"]` selector) — this
+   *    appears only once the Ezoic ad response is rendering. It is scoped to the
+   *    placeholder on purpose: a bare `div-gpt-ad*` match would also fire on
+   *    plain publisher-hardcoded GPT slots present in the HTML before the load,
+   *    re-introducing the mount-time collision on mixed Ezoic + plain-GPT pages.
+   *
+   * Returns `false` during server-side rendering and when `performance` /
+   * `document` APIs are unavailable.
+   */
+  isAdLoadStarted(): boolean {
+    if (!this.isBrowser) {
+      return false;
+    }
+    if (this.runtime()?.enabled === true) {
+      return true;
+    }
+    const perf = this.document.defaultView?.performance;
+    if (perf && typeof perf.getEntriesByType === 'function') {
+      for (const entry of perf.getEntriesByType('resource')) {
+        if (SA_GO_REQUEST_RE.test(entry.name)) {
+          return true;
+        }
+      }
+    }
+    return (
+      this.document.querySelector('[id^="ezoic-pub-ad-placeholder-"] [id^="div-gpt-ad"]') !== null
+    );
   }
 
   /**
