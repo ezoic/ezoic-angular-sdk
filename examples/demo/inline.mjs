@@ -38,7 +38,7 @@ const REQUIRED_FEATURE_SUBSTRINGS = [
   'the.gatekeeperconsent.com',
   'sa.min.js',
   'open.video',
-  'porpoiseant',
+  'initRewardedAds',
 ];
 
 function isRemoteUrl(url) {
