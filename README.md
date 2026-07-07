@@ -6,8 +6,9 @@ and video with idiomatic standalone components, providers and services.
 
 [![CI](https://github.com/ezoic/ezoic-angular-sdk/actions/workflows/ci.yml/badge.svg)](https://github.com/ezoic/ezoic-angular-sdk/actions/workflows/ci.yml)
 
-> **Status: early development (0.x).** The package is being built incrementally toward full feature
-> coverage. The API is not yet stable and the package is not yet published to npm. See the
+> **Status: v1.0.0 — feature-complete.** Ships display ads, SPA routing, zero-config placements,
+> CMP/consent, rewarded ads, and video, matching the full feature roadmap below. The package is not
+> yet published to the npm registry (publishing is a manual step). See the
 > [changelog](./CHANGELOG.md) and [roadmap](#roadmap).
 
 ## Requirements
