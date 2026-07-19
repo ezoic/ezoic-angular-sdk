@@ -59,7 +59,7 @@
     "ng-packagr": "^20.3.0",
     "prettier": "^3.9.4",
     "typescript": "~5.9.2",
-    "typescript-eslint": "8.46.4"
+    "typescript-eslint": "8.64.0"
   },
   "overrides": {
     "@babel/core": "^7.29.7"
