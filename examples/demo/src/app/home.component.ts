@@ -16,7 +16,8 @@ import { DemoStateService } from './demo-state.service';
   template: `
     <h1>Home</h1>
     <p>
-      Zero-config semantic placements resolve to reserved 900-range ids in the browser and default to
+      Zero-config semantic placements resolve to reserved 900-range ids in the browser and default
+      to
       <code>required: true</code>. The examples below pass explicit <code>[sizes]</code> to restrict
       which sizes may serve; omit <code>[sizes]</code> to let Ezoic optimize automatically.
     </p>
