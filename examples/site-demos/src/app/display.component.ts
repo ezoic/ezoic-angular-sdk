@@ -21,8 +21,8 @@ import { EventLogService } from './event-log.service';
     <ezoic-ad [id]="910" [required]="true" [sizes]="['728x90', '320x50']" />
 
     <p>
-      Generated ids carry no dashboard sizing, so <code>[sizes]</code> and <code>[required]</code>
-      are passed explicitly — the canonical pairing.
+      This example passes <code>[sizes]</code> and <code>[required]</code> to show the optional size
+      whitelist and required flag — omit <code>[sizes]</code> to let Ezoic optimize automatically.
     </p>
   `,
 })

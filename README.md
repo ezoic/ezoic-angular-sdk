@@ -120,9 +120,9 @@ export class ArticleComponent {}
   `showAds(...)` call. The Ezoic runtime applies its own debounce on top, so the SDK adds no extra
   timer.
 - **`required` / `sizes`** map to the verified `showAds` object form
-  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`). An explicit
-  `[id]` maps to a placeholder whose ad sizes can be configured in the Ezoic dashboard, so
-  `[sizes]` is optional for id-based placements (no warning).
+  (`{ id, required, sizes }`); each size is `WIDTHxHEIGHT` (for example `"728x90"`). `[sizes]` is
+  optional everywhere — when omitted, Ezoic selects and optimizes ad sizes automatically; when
+  provided, it restricts which sizes may serve.
 - **Teardown:** when a component is destroyed the placeholder is torn down via
   `destroyPlaceholders(id)`. Ids are reference-counted, so mounting the same id twice logs a warning
   (ids must be unique on a page) and tears down only once.
@@ -149,9 +149,9 @@ export class ArticleComponent {}
 ```
 
 - Provide **exactly one** of `[id]` or `location` on a component; supplying both or neither throws.
-- Location placements default to `required: true` (opt out with `[required]="false"`) and MUST pass
-  `[sizes]` (a dev-mode warning is logged when omitted), because zero-config 900–999 placeholders
-  have no dashboard-configured sizing — the client-passed sizes are the forced sizes.
+- Location placements default to `required: true` (opt out with `[required]="false"`). `[sizes]` is
+  optional — when omitted, Ezoic selects and optimizes ad sizes automatically; when provided, it
+  restricts which sizes may serve, useful when the surrounding layout only fits certain sizes.
 - When the Ezoic runtime has loaded, resolution goes through `ezstandalone.GetGeneratedIdAsync`
   (DOM-aware). Before then the SDK falls back to a built-in static name-to-id map, so placements
   work even during the first paint.

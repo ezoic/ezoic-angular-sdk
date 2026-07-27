@@ -393,7 +393,7 @@ describe('EzoicAdComponent', () => {
       warn.mockRestore();
     });
 
-    it('warns in dev mode when a location placement is requested without sizes', async () => {
+    it('does not warn about sizes when a location placement is requested without sizes', async () => {
       const warn = jest.spyOn(console, 'warn').mockImplementation(() => undefined);
       const fixture = TestBed.createComponent(FlexHostComponent);
       fixture.componentInstance.ads = [{ location: 'top_of_page' }];
@@ -401,7 +401,8 @@ describe('EzoicAdComponent', () => {
       await settle();
       fixture.detectChanges();
       drain();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('without [sizes]'));
+      expect(warn).not.toHaveBeenCalledWith(expect.stringContaining('sizes'));
+      expect(spies.showAds).toHaveBeenCalledWith({ id: 900, required: true, sizes: [] });
       warn.mockRestore();
     });
 

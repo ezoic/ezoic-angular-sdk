@@ -22,11 +22,12 @@ import { EventLogService } from './event-log.service';
     <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
 
     <p>
-      Sizes are still required because zero-config placements carry no dashboard-configured sizing,
-      and location placements default to <code>required: true</code>. Today the SDK resolves the
-      name via <code>ezstandalone.GetGeneratedIdAsync</code> (falling back to an internal
-      id-to-location map); it does not yet use the newer id-less <code>showAds</code> primitive, so
-      this is a "zero-config placement", not an id-less integration.
+      <code>[sizes]</code> is optional — when omitted, Ezoic optimizes ad sizes automatically. This
+      example passes sizes to restrict which sizes may serve. Location placements default to
+      <code>required: true</code>. Today the SDK resolves the name via
+      <code>ezstandalone.GetGeneratedIdAsync</code> (falling back to an internal id-to-location
+      map); it does not yet use the newer id-less <code>showAds</code> primitive, so this is a
+      "zero-config placement", not an id-less integration.
     </p>
   `,
 })

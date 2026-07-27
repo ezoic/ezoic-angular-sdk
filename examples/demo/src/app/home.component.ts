@@ -6,8 +6,8 @@ import { DemoStateService } from './demo-state.service';
  * Home route. Demonstrates zero-config semantic placements (900-range),
  * an explicit generated-id placement, and dynamic-content placements
  * that mount after initial load when the shell's "Load more ads" button flips
- * the shared `showMoreAds` signal. Generated ids carry no dashboard sizing, so
- * every placement below passes explicit sizes.
+ * the shared `showMoreAds` signal. Examples pass explicit sizes to show the
+ * optional size whitelist; omit `[sizes]` to let Ezoic optimize automatically.
  */
 @Component({
   selector: 'app-home',
@@ -16,9 +16,9 @@ import { DemoStateService } from './demo-state.service';
   template: `
     <h1>Home</h1>
     <p>
-      Zero-config semantic placements resolve to reserved 900-range ids in the browser. They carry
-      no dashboard sizing, so each passes explicit sizes and keeps the default
-      <code>required: true</code>.
+      Zero-config semantic placements resolve to reserved 900-range ids in the browser and default to
+      <code>required: true</code>. The examples below pass explicit <code>[sizes]</code> to restrict
+      which sizes may serve; omit <code>[sizes]</code> to let Ezoic optimize automatically.
     </p>
 
     <ezoic-ad location="top_of_page" required [sizes]="bannerSizes" />
@@ -28,13 +28,13 @@ import { DemoStateService } from './demo-state.service';
     <ezoic-ad location="mid_content" required [sizes]="bannerSizes" />
 
     <h2>Explicit-id placement</h2>
-    <p>Generated ids carry no dashboard sizing either, so this one passes sizes explicitly too.</p>
+    <p>This explicit-id placement passes sizes to demonstrate the optional size whitelist.</p>
     <ezoic-ad [id]="910" [required]="true" [sizes]="['728x90', '320x50']" />
 
     <h2>Best-effort placement (required opt-out)</h2>
     <p>
       Location placements default to <code>required: true</code>. Pass
-      <code>[required]="false"</code> to make one best-effort — it still passes sizes.
+      <code>[required]="false"</code> to make one best-effort — sizes are still optional.
     </p>
     <ezoic-ad location="bottom_of_page" [required]="false" [sizes]="bannerSizes" />
 
@@ -49,6 +49,6 @@ import { DemoStateService } from './demo-state.service';
 export class HomeComponent {
   protected readonly demoState = inject(DemoStateService);
 
-  /** Sizes requested for the zero-config location placements. */
+  /** Sizes passed to demonstrate the optional size whitelist on location placements. */
   protected readonly bannerSizes = ['728x90', '320x50'];
 }

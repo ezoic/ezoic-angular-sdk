@@ -7,7 +7,6 @@ import {
   computed,
   inject,
   input,
-  isDevMode,
   numberAttribute,
   signal,
 } from '@angular/core';
@@ -29,12 +28,11 @@ import { EZOIC_PLACEHOLDER_ID_PREFIX, placeholderElementId } from './placeholder
  * location-based placeholder resolves its id in the browser only, so its div is
  * not rendered during server-side rendering.
  *
- * A `location` (zero-config, 900-range) placement has no dashboard-configured
- * sizing, so it should pass explicit `sizes` and defaults to `required: true`
- * (a dev-mode warning is logged when a location placement omits `sizes`) —
- * opt out of required with `[required]="false"`. An explicit `[id]`
- * placement maps to a placeholder whose sizes can be configured in the Ezoic
- * dashboard, so `[sizes]` is optional there.
+ * `[sizes]` is optional. When omitted, Ezoic selects and optimizes ad sizes
+ * automatically — including for `location` placements. When provided, it
+ * restricts which sizes may serve, useful when the surrounding layout only
+ * fits certain sizes. A `location` (zero-config, 900-range) placement defaults
+ * to `required: true` — opt out with `[required]="false"`.
  *
  * @example
  * ```html
@@ -73,15 +71,20 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
   /**
    * Request the ad as required (must-fill). An explicit-`[id]` placement defaults
    * to `false`; a `location` (zero-config) placement defaults to `true` because
-   * zero-config placeholders have no dashboard-configured sizing — pass
-   * `[required]="false"` to opt a location placement out.
+   * the server treats a placement as zero-config only when it is required (and
+   * the id is in the 900–999 range) — pass `[required]="false"` to opt a
+   * location placement out.
    */
   readonly required = input<boolean | undefined, unknown>(undefined, {
     transform: (value: unknown): boolean | undefined =>
       value == null ? undefined : booleanAttribute(value),
   });
 
-  /** Ad sizes to request, each in `WIDTHxHEIGHT` form (for example `"728x90"`). */
+  /**
+   * Optional size whitelist, each in `WIDTHxHEIGHT` form (for example `"728x90"`).
+   * When omitted, Ezoic selects and optimizes ad sizes automatically. When
+   * provided, only the listed sizes may serve.
+   */
   readonly sizes = input<readonly string[]>([]);
 
   /** The resolved placeholder id, or `null` until it is known. */
@@ -157,19 +160,6 @@ export class EzoicAdComponent implements OnInit, OnDestroy {
     this.resolvedId.set(id);
     const required = this.required() ?? defaultRequired;
     const sizes = [...this.sizes()];
-    // Only zero-config (location) placements need explicit sizes. An explicit
-    // [id] maps to a placeholder whose ad sizes can be configured in the Ezoic
-    // dashboard, so a missing-[sizes] warning there would be a false positive.
-    // A 900-range location placeholder has no dashboard-configured sizing, so
-    // warn (dev-mode, browser-only) when it is requested without sizes.
-    const location = this.location();
-    if (isDevMode() && this.ezoic.isBrowser && location && sizes.length === 0) {
-      console.warn(
-        `[ezoic] <ezoic-ad> location "${location}" was requested without [sizes]. ` +
-          `Zero-config (900-range) Ezoic placeholders have no dashboard-configured sizing, ` +
-          `so pass explicit sizes such as [sizes]="['300x250']" (with required) so the ad can fill.`,
-      );
-    }
     this.registry.register({ id, required, sizes });
   }
 }
