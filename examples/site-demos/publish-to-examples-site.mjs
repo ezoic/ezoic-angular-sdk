@@ -68,11 +68,12 @@ const SCENARIOS = [
     explainerBody:
       'Instead of a numeric id, the <code>&lt;ezoic-ad&gt;</code> component names a semantic ' +
       '<code>location</code> and the SDK resolves it to a reserved 900-range placeholder id at ' +
-      'runtime. Sizes are still required because zero-config placements carry no ' +
-      'dashboard-configured sizing, and location placements default to <code>required: true</code>. ' +
-      'Today the SDK resolves the name via <code>ezstandalone.GetGeneratedIdAsync</code> (falling ' +
-      'back to an internal id-to-location map); it does not yet use the newer id-less ' +
-      '<code>showAds</code> primitive, so this is a zero-config placement, not an id-less integration.',
+      'runtime. <code>[sizes]</code> is optional — when omitted, Ezoic optimizes ad sizes ' +
+      'automatically; when provided, it restricts which sizes may serve. Location placements ' +
+      'default to <code>required: true</code>. Today the SDK resolves the name via ' +
+      '<code>ezstandalone.GetGeneratedIdAsync</code> (falling back to an internal id-to-location ' +
+      'map); it does not yet use the newer id-less <code>showAds</code> primitive, so this is a ' +
+      'zero-config placement, not an id-less integration.',
     snippet:
       '<!-- zero-config.component.ts template -->\n' +
       '<ezoic-ad location="under_first_paragraph" required [sizes]="[\'300x250\']" />',

@@ -9,7 +9,7 @@ import {
  * Article route. Mounts a different explicit-id display placement than Home so
  * navigation tears down the departing route's placeholders and requests this
  * route's, plus an inline Open Video embed and an Ezoic video placeholder.
- * Generated ids carry no dashboard sizing, so sizes are passed explicitly.
+ * The display placement passes sizes to demonstrate the optional size whitelist.
  */
 @Component({
   selector: 'app-article',

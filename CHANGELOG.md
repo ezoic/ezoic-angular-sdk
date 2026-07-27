@@ -7,6 +7,12 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Removed the dev-mode warning for `location` placements without `sizes`, and corrected docs: `sizes`
+  is optional everywhere — Ezoic optimizes ad sizes automatically; when provided, `sizes` only
+  restricts which sizes may serve.
+
 ### Fixed
 
 - `EzoicRewardedService.requestAndShow()` and `requestWithOverlay()` now force `alwaysCallback`
