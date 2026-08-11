@@ -43,8 +43,12 @@ const outputDir = join(repoRoot, 'dist', 'site-demos');
  * Angular AOT compiler), so a wrong route or a dropped scenario fails the build.
  */
 const SCENARIOS = [
-  { slug: 'basic', route: 'display', assert: ['728x90', '320x50'] },
-  { slug: 'zero-config', route: 'zero-config', assert: ['under_first_paragraph', '300x250'] },
+  { slug: 'basic', route: 'display', assert: ['300x250', '336x280', '580x400', '728x90'] },
+  {
+    slug: 'zero-config',
+    route: 'zero-config',
+    assert: ['under_first_paragraph', '300x250', '336x280', '580x400', '728x90'],
+  },
   { slug: 'spa', route: 'spa-a', assert: ['spa-b'] },
   { slug: 'dynamic', route: 'dynamic', assert: ['Load more content'] },
   { slug: 'rewarded', route: 'rewarded', assert: ['demo-reward', 'demo-show'] },

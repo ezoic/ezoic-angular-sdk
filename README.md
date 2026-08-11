@@ -138,11 +138,23 @@ the semantic name to a reserved 900–999 placeholder id:
   selector: 'app-article',
   imports: [EzoicAdComponent],
   template: `
-    <ezoic-ad location="top_of_page" required [sizes]="['728x90', '320x50']" />
+    <ezoic-ad
+      location="top_of_page"
+      required
+      [sizes]="['728x90', '970x90', '970x250', '300x250', '336x280', '320x50']"
+    />
     <p>…first paragraph…</p>
-    <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
+    <ezoic-ad
+      location="under_first_paragraph"
+      required
+      [sizes]="['300x250', '336x280', '580x400', '728x90']"
+    />
     <p>…more content…</p>
-    <ezoic-ad location="mid_content" required [sizes]="['300x250']" />
+    <ezoic-ad
+      location="mid_content"
+      required
+      [sizes]="['300x250', '336x280', '580x400', '728x90']"
+    />
   `,
 })
 export class ArticleComponent {}
@@ -578,14 +590,14 @@ placeholder is torn down automatically when the component is destroyed, so there
 
 ### Common replacements
 
-| Raw snippet                                                | SDK equivalent                                                                 |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Head scripts (CMP tags, cmd-queue stub, bundle, analytics) | `provideEzoic()`                                                               |
-| `ezstandalone.cmd.push(() => ezstandalone.showAds(id))`    | `<ezoic-ad [id]="id" />` or `EzoicService.showAds(id)`                         |
-| Manual `destroyPlaceholders` on route change               | Automatic teardown, plus `withRouterRefresh()`                                 |
-| `setIsSinglePageApplication(true)` + manual `newPage()`    | `withRouterRefresh()`                                                          |
-| Hand-picked zero-config placeholder ids                    | `<ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />` |
-| Manual CMP `<script>` tags                                 | Injected by `provideEzoic()` (`cmp: true` default)                             |
+| Raw snippet                                                | SDK equivalent                                                                                                 |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Head scripts (CMP tags, cmd-queue stub, bundle, analytics) | `provideEzoic()`                                                                                               |
+| `ezstandalone.cmd.push(() => ezstandalone.showAds(id))`    | `<ezoic-ad [id]="id" />` or `EzoicService.showAds(id)`                                                         |
+| Manual `destroyPlaceholders` on route change               | Automatic teardown, plus `withRouterRefresh()`                                                                 |
+| `setIsSinglePageApplication(true)` + manual `newPage()`    | `withRouterRefresh()`                                                                                          |
+| Hand-picked zero-config placeholder ids                    | `<ezoic-ad location="under_first_paragraph" required [sizes]="['300x250', '336x280', '580x400', '728x90']" />` |
+| Manual CMP `<script>` tags                                 | Injected by `provideEzoic()` (`cmp: true` default)                                                             |
 
 If the host page already has Ezoic scripts, injection is idempotent — they won't be duplicated — so
 migration can be incremental. Pass `provideEzoic({ cmp: false })` only if an Ezoic-compatible CMP is

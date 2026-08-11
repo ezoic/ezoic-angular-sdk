@@ -57,7 +57,7 @@ const SCENARIOS = [
       'provideEzoic({}, withRouterRefresh(), withRewardedAds())\n' +
       '\n' +
       '<!-- display.component.ts template — one explicit-id placement -->\n' +
-      '<ezoic-ad [id]="910" [required]="true" [sizes]="[\'728x90\', \'320x50\']" />',
+      "<ezoic-ad [id]=\"910\" [required]=\"true\" [sizes]=\"['300x250', '336x280', '580x400', '728x90']\" />",
   },
   {
     slug: 'zero-config',
@@ -75,7 +75,7 @@ const SCENARIOS = [
       '<code>showAds</code> primitive, so this is a zero-config placement, not an id-less integration.',
     snippet:
       '<!-- zero-config.component.ts template -->\n' +
-      '<ezoic-ad location="under_first_paragraph" required [sizes]="[\'300x250\']" />',
+      "<ezoic-ad location=\"under_first_paragraph\" required [sizes]=\"['300x250', '336x280', '580x400', '728x90']\" />",
   },
   {
     slug: 'spa',

@@ -19,14 +19,21 @@ import { EventLogService } from './event-log.service';
       id.
     </p>
 
-    <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
+    <ezoic-ad
+      location="under_first_paragraph"
+      required
+      [sizes]="['300x250', '336x280', '580x400', '728x90']"
+    />
 
     <p>
       Sizes are still required because zero-config placements carry no dashboard-configured sizing,
-      and location placements default to <code>required: true</code>. Today the SDK resolves the
-      name via <code>ezstandalone.GetGeneratedIdAsync</code> (falling back to an internal
-      id-to-location map); it does not yet use the newer id-less <code>showAds</code> primitive, so
-      this is a "zero-config placement", not an id-less integration.
+      and location placements default to <code>required: true</code>. Content positions pass a
+      rectangle-led size set (where live-demand evidence on Ezoic-integrated test sites
+      concentrates); the platform filters client sizes to the site's configured allowed sizes per
+      position/form factor. Today the SDK resolves the name via
+      <code>ezstandalone.GetGeneratedIdAsync</code> (falling back to an internal id-to-location
+      map); it does not yet use the newer id-less <code>showAds</code> primitive, so this is a
+      "zero-config placement", not an id-less integration.
     </p>
   `,
 })
@@ -35,7 +42,7 @@ export class ZeroConfigComponent {
 
   constructor() {
     this.eventLog.add(
-      'Zero-config scenario mounted: <ezoic-ad location="under_first_paragraph" required sizes=[300x250]>',
+      'Zero-config scenario mounted: <ezoic-ad location="under_first_paragraph" required sizes=[300x250,336x280,580x400,728x90]>',
     );
   }
 }

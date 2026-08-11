@@ -36,7 +36,11 @@ import { EzoicAdComponent } from '@ezoic/angular-sdk';
   template: `
     <ezoic-ad [id]="101" />
     <ezoic-ad [id]="102" />
-    <ezoic-ad location="under_first_paragraph" required [sizes]="['300x250']" />
+    <ezoic-ad
+      location="under_first_paragraph"
+      required
+      [sizes]="['300x250', '336x280', '580x400', '728x90']"
+    />
   `,
 })
 export class ArticleComponent {}
