@@ -36,19 +36,19 @@
     ]
   },
   "dependencies": {
-    "@angular/common": "^20.3.30",
-    "@angular/compiler": "^20.3.30",
-    "@angular/core": "^20.3.30",
-    "@angular/platform-browser": "^20.3.30",
+    "@angular/common": "^20.3.31",
+    "@angular/compiler": "^20.3.31",
+    "@angular/core": "^20.3.31",
+    "@angular/platform-browser": "^20.3.31",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
   },
   "devDependencies": {
-    "@angular/build": "^20.3.35",
-    "@angular/cli": "^20.3.35",
-    "@angular/compiler-cli": "^20.3.30",
-    "@angular/router": "^20.3.30",
+    "@angular/build": "^20.3.37",
+    "@angular/cli": "^20.3.37",
+    "@angular/compiler-cli": "^20.3.31",
+    "@angular/router": "^20.3.31",
     "@types/jest": "30.0.0",
     "@types/node": "^20.19.0",
     "angular-eslint": "20.7.0",
