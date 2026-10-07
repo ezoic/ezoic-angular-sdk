@@ -1,6 +1,6 @@
 {
   "name": "@ezoic/angular-sdk",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Official Ezoic SDK for Angular — script management, display ads, SPA routing, CMP/consent, rewarded ads and video for Ezoic ad integration.",
   "keywords": [
     "ezoic",
